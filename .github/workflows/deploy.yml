@@ -28,8 +28,13 @@ jobs:
           host: 51.195.148.206
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          strict: false
           script: |
             set -e
             echo "=== Deploy started ==="
+            echo "User: $(whoami)"
+            echo "Home: $HOME"
+            ls -la /var/www/groundhopper/
             rsync -avz --delete dist/ /var/www/groundhopper/
             echo "=== Deploy finished ==="
+            ls -la /var/www/groundhopper/
