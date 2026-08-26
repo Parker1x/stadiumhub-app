@@ -1,0 +1,141 @@
+/* ============ NEW IN THE REACT APP: stadium info & statistics ============ */
+
+/* ---- dialog replacement (React modal) ---- */
+.dlg-scrim{position:fixed;inset:0;z-index:60;background:rgba(17,17,17,.45);
+  display:grid;place-items:center;padding:18px}
+.dlg{width:min(640px,100%);max-height:88vh;display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);box-shadow:0 18px 60px -20px rgba(20,15,5,.5)}
+.dlg-head{position:relative;padding:18px 20px 10px;border-bottom:1px solid var(--line)}
+.dlg-head h2{margin:0;font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:24px}
+.dlg-head .sub{color:var(--text-2);font-size:13.5px;margin-top:2px}
+.dlg-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;
+  border:1px solid var(--line);background:var(--paper);cursor:pointer;font-size:16px;line-height:1}
+.dlg-close:hover{border-color:var(--flood);color:var(--flood)}
+.dlg-body{padding:16px 20px;overflow-y:auto}
+.dlg-foot{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--line)}
+
+/* ---- stadium page tabs ---- */
+.dlg-tabs{display:flex;gap:2px;margin-top:14px;overflow-x:auto;padding-bottom:0}
+.dlg-tab{appearance:none;background:none;border:0;cursor:pointer;white-space:nowrap;
+  font-family:"Oswald",sans-serif;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-3);padding:8px 10px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.dlg-tab:hover{color:var(--text)}
+.dlg-tab.on{color:var(--text);border-bottom-color:var(--flood)}
+
+.visit-sync{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.visit-sync .eyebrow{margin-bottom:4px}
+
+/* ---- fixtures & live scores ---- */
+.livewrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px;
+  padding:10px 13px;background:var(--flood-soft);border:1px solid var(--flood);
+  border-radius:var(--radius);font-size:14.5px}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--flood);
+  animation:ghpulse 1.2s ease-in-out infinite}
+@keyframes ghpulse{0%,100%{opacity:1}50%{opacity:.25}}
+.livetally{font-size:17px;font-weight:700;color:var(--flood)}
+
+.fx{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px dashed var(--line);font-size:13.5px}
+.fx:last-child{border-bottom:0}
+.fx-date{width:118px;flex:none;color:var(--text-3);font-family:"JetBrains Mono",monospace;font-size:11.5px}
+.fx-teams{flex:1;min-width:0}
+.fx-score{font-weight:700;color:var(--text)}
+.fxtag{flex:none;font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.09em;
+  color:#fff;background:var(--flood);border-radius:2px;padding:2px 6px}
+
+/* ---- places near the ground ---- */
+.place-list,.scorer-list{list-style:none;margin:0;padding:0}
+.place{display:flex;gap:10px;padding:7px 2px;border-bottom:1px dashed var(--line);align-items:baseline}
+.place:last-child{border-bottom:0}
+.place-icon{flex:none;width:22px;text-align:center}
+.place-main a{color:var(--text);font-weight:600;text-decoration:none;
+  border-bottom:1px dotted var(--line-strong)}
+.place-main a:hover{color:var(--flood);border-bottom-color:var(--flood)}
+.place-unnamed{color:var(--text-3);font-style:italic}
+.place-tags{display:block;color:var(--text-3);font-size:11.5px;margin-top:1px}
+
+/* ---- transport ---- */
+.station{border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--paper-warm);padding:10px 12px;margin-bottom:8px}
+.station-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.station-head b{font-size:14.5px}
+.planner-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.dep-table{width:100%;border-collapse:collapse;margin-top:8px}
+.dep-table td{padding:5px 6px;border-bottom:1px dashed var(--line);font-size:13px}
+.dep-min{width:64px;color:var(--flood);font-weight:700;font-size:15px}
+.dep-min small{font-size:10px;color:var(--text-3)}
+
+/* ---- statistics page ---- */
+.scorer{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px dashed var(--line)}
+.scorer:last-child{border-bottom:0}
+.scorer .bar{flex:1;height:10px;background:var(--surface-2);border-radius:1px;overflow:hidden}
+.scorer .bar i{display:block;height:100%;background:var(--pitch)}
+.scorer .rv{width:34px;text-align:right}
+.avatar.sm{width:26px;height:26px;font-size:11px;flex:none}
+.fx-table .fx .place-tags{display:inline;flex:none}
+.stats .stat .v{min-height:1.2em}
+
+/* toast (React portal version of the original #toast) */
+#toast-react{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:3px;
+  font-size:13.5px;z-index:99;box-shadow:var(--shadow);animation:toastin .18s ease-out}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* username availability feedback on the sign-up form */
+.hint.ok{color:var(--pitch);font-weight:600}
+.hint.bad{color:var(--flood);font-weight:600}
+
+/* username availability feedback on the sign-up form */
+.hint.ok{color:var(--pitch);font-weight:600}
+.hint.bad{color:var(--flood);font-weight:600}
+
+/* username availability feedback on the sign-up form */
+.hint.ok{color:var(--pitch);font-weight:600}
+.hint.bad{color:var(--flood);font-weight:600}
+
+/* blurred backdrop behind the edit-profile modal */
+.dlg-blur{background:rgba(30,24,12,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+
+/* favourite-team picker: type-to-filter dropdown */
+.team-picker{position:relative}
+.team-list{position:absolute;z-index:20;left:0;right:0;top:100%;margin:4px 0 0;padding:4px 0;
+  list-style:none;max-height:240px;overflow-y:auto;background:var(--surface);
+  border:1.5px solid var(--line-strong);border-radius:var(--radius);
+  box-shadow:0 10px 28px -10px rgba(20,15,5,.4)}
+.team-list button{display:block;width:100%;text-align:left;padding:8px 12px;border:0;
+  background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:inherit}
+.team-list button:hover{background:var(--paper-warm);color:var(--flood)}
+.team-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;margin-top:6px;
+  background:var(--paper-warm);border:1px solid var(--line-strong);border-radius:2px;
+  font-size:12px;font-weight:700;color:var(--text-2)}
+
+/* ============ FIXTURES TAB (FOTMOB-style) ============ */
+.fx-days{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.fx-days .chip.on{background:var(--flood);color:#F5EED9;border-color:var(--flood)}
+.fx-datepick input{padding:7px 10px;background:var(--surface);border:1.5px solid var(--line-strong);
+  border-radius:2px;font-size:13px;color:var(--text);font-family:inherit}
+.fx-daytitle{display:flex;align-items:baseline;gap:10px;margin:2px 0 12px}
+.fx-daytitle h2{margin:0;font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:24px}
+.fx-comp{margin-bottom:18px}
+.fx-comp-head{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:2px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:2px;
+  font-size:12.5px;letter-spacing:.02em}
+.fx-comp-head b{font-family:"Oswald",sans-serif;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;font-size:11.5px}
+.fx-row{display:grid;grid-template-columns:64px 1fr 52px 1fr 92px;gap:8px;align-items:center;
+  padding:9px 10px;border-bottom:1px dashed var(--line);font-size:14px}
+.fx-row:last-child{border-bottom:0}
+.fx-row.is-live{background:var(--flood-soft)}
+.fx-when{text-align:center;color:var(--text-3);font-size:12.5px}
+.fx-ft{font-weight:700;color:var(--text-2)}
+.fx-home,.fx-away{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-away{text-align:right}
+.fx-score{text-align:center;font-weight:700}
+.attend-btn{appearance:none;cursor:pointer;font-family:"Oswald",sans-serif;font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:2px;
+  background:var(--surface);color:var(--text-2);border:1.5px solid var(--line-strong)}
+.attend-btn:hover{border-color:var(--flood);color:var(--flood)}
+.attend-btn.on{background:var(--pitch);border-color:var(--pitch);color:#F5EED9}
+@media (max-width:620px){
+  .fx-row{grid-template-columns:52px 1fr 44px 1fr 74px;font-size:13px}
+}

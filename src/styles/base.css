@@ -1,0 +1,580 @@
+
+/* ============ THE PROGRAMME =========================================
+   Deliberately single-look — a matchday programme is paper, not a screen
+   theme, so the identity commits to the paper. Both browser theme modes
+   see the same design. Everything paints its own background explicitly
+   so the artifact host's ground can never bleed through. */
+
+[hidden]{display:none !important}
+:root{
+  --paper:#EEE5CD;         /* aged programme cream */
+  --paper-warm:#E9DEB9;    /* alt row / hover */
+  --ink:#111111;           /* body ink */
+  --surface:#F5EED9;       /* cards on paper */
+  --surface-2:#E4D9BE;
+  --line:#C5B892;          /* subtle rule */
+  --line-strong:#8A7E5C;   /* strong ink rule */
+  --text:#111111;
+  --text-2:#403929;
+  --text-3:#807257;
+  /* --flood was navy's amber accent; here it becomes the programme's own
+     ink-red — the single loud voice on the page. */
+  --flood:#7F1D1D;         /* deep crimson — was #B71C1C, deepened per feedback */
+  --flood-bright:#7F1D1D;
+  --flood-soft:#F0DBDB;
+  --pitch:#234A2E;         /* field green — visited state, pins on map */
+  --pitch-soft:#D5DFC1;
+  --brick:#8B6A1F;         /* muted gold, used sparingly for programme detail */
+  --shadow:0 1px 0 rgba(64,50,20,.06), 0 6px 20px -12px rgba(20,15,5,.22);
+  --radius:2px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+input,select,textarea,button{font-family:inherit}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--text);
+  font-family:"Chivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  /* Very faint paper stipple — reads as programme newsprint, not obvious. */
+  background-image:radial-gradient(rgba(64,50,20,.055) 1px, transparent 1px);
+  background-size:3px 3px;
+}
+h1,h2,h3,.display{
+  font-family:"DM Serif Display","Times New Roman",Georgia,serif;
+  font-weight:400;
+  letter-spacing:-.005em;
+  text-wrap:balance;
+  margin:0;
+  line-height:1.1;
+}
+.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--flood);outline-offset:2px;border-radius:2px}
+::selection{background:var(--flood);color:#F5EED9}
+
+/* ============ MASTHEAD — a programme's title band ============
+   Solid programme-red block with a cream serif title, framed by the
+   Wembley arch redrawn as a fine ink illustration. */
+.masthead{
+  position:sticky;top:0;z-index:40;
+  background:var(--flood);
+  color:#F5EED9;
+  border-bottom:2px solid var(--ink);
+  box-shadow:0 2px 0 var(--flood);   /* second rule that echoes programme covers */
+}
+.masthead-inner{
+  max-width:940px;margin:0 auto;padding:0 18px;
+  display:flex;align-items:flex-end;gap:14px;min-height:72px;
+}
+.wordmark{
+  position:relative;flex:none;
+  display:flex;align-items:flex-end;justify-content:center;
+  width:258px;height:72px;
+}
+.wordmark .arch{
+  position:absolute;left:0;top:6px;width:100%;height:60px;overflow:visible;
+}
+/* Fine ink outline arch — reads as an engraving on the programme cover
+   rather than a bright neon graphic. */
+.arch-band{fill:none;stroke:#F5EED9;stroke-width:1.4;stroke-linecap:round;
+  vector-effect:non-scaling-stroke;opacity:.9}
+.arch-lattice{fill:none;stroke:#F5EED9;stroke-width:.7;opacity:.6;
+  vector-effect:non-scaling-stroke}
+.arch-cable{fill:none;stroke:#F5EED9;stroke-width:.55;opacity:.35;
+  vector-effect:non-scaling-stroke}
+.arch-foot{fill:#F5EED9;opacity:.85}
+.wm-text{
+  position:relative;font-family:"DM Serif Display",serif;font-weight:400;font-size:24px;
+  letter-spacing:.005em;color:#F5EED9;line-height:1;padding-bottom:10px;text-transform:none;
+}
+.tally{
+  margin-left:auto;padding-bottom:16px;display:flex;align-items:baseline;gap:5px;
+  font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:12.5px;color:#F5EED9;opacity:.75;letter-spacing:.02em;
+}
+.tally b{color:#F5EED9;opacity:1;font-family:"DM Serif Display",serif;font-size:22px;
+  font-weight:400;letter-spacing:0}
+
+/* Table of contents — cream tab strip below the red band */
+.turnstiles{background:var(--paper);border-bottom:1px solid var(--line-strong);
+  position:sticky;top:74px;z-index:39}
+.turnstiles-inner{max-width:940px;margin:0 auto;padding:0 18px;display:flex;gap:0}
+.turnstile{
+  appearance:none;background:none;border:0;cursor:pointer;
+  font-family:"Chivo",sans-serif;font-size:11.5px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-3);padding:14px 18px 12px;
+  border-bottom:3px solid transparent;margin-bottom:-1px;
+  transition:color .13s ease, border-color .13s ease;
+}
+.turnstile:hover{color:var(--text)}
+.turnstile[aria-selected="true"]{color:var(--flood);border-bottom-color:var(--flood)}
+.turnstile .n{
+  font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--text-3);
+  margin-left:6px;letter-spacing:0;font-weight:400;
+}
+.turnstile[aria-selected="true"] .n{color:var(--flood)}
+
+main{max-width:940px;margin:0 auto;padding:20px 18px 90px}
+.view[hidden]{display:none}
+
+/* ============ SHARED BITS ============ */
+.eyebrow{
+  font-family:"Chivo",sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);
+}
+.card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.btn{
+  appearance:none;cursor:pointer;
+  font-family:"Chivo",sans-serif;font-size:11.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 16px;border-radius:0;               /* square edges — programme buttons */
+  border:1.5px solid var(--ink);background:transparent;color:var(--ink);
+  transition:background .13s ease,color .13s ease;
+}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn-primary{background:var(--flood);color:#F5EED9;border-color:var(--flood)}
+.btn-primary:hover{background:#8E1010;border-color:#8E1010;color:#F5EED9}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--text-2);padding:7px 10px}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+
+/* ============ SECTION 1 — THE LIST ============ */
+.searchbar{
+  position:sticky;top:117px;z-index:30;
+  background:var(--paper);padding:16px 0 10px;margin-top:-6px;
+}
+.search-field{position:relative;display:flex;align-items:center}
+.search-field svg{position:absolute;left:13px;width:17px;height:17px;color:var(--text-3);pointer-events:none}
+#search{
+  width:100%;padding:12px 14px 12px 40px;
+  background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);font-size:15px;
+}
+#search::placeholder{color:var(--text-3)}
+#search:focus{border-color:var(--flood);outline:none;box-shadow:0 0 0 3px var(--flood-soft)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{
+  appearance:none;cursor:pointer;background:transparent;
+  border:1px solid var(--line-strong);color:var(--text-2);
+  font-family:"Chivo",sans-serif;font-weight:600;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 12px;border-radius:0;
+  transition:all .13s ease;white-space:nowrap;
+}
+.chip:hover{border-color:var(--ink);color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.result-count{
+  font-family:"Chivo",sans-serif;font-weight:600;font-size:10.5px;color:var(--text-3);
+  padding:14px 2px 8px;letter-spacing:.14em;text-transform:uppercase;
+  border-bottom:1px solid var(--line-strong);margin-bottom:0;
+}
+
+.ground-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ground{
+  display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:14px;
+  background:transparent;border:0;border-bottom:1px solid var(--line);
+  border-radius:0;padding:13px 4px;
+  transition:background .13s ease;
+}
+.ground:hover{background:var(--paper-warm)}
+.ground.is-visited{background:linear-gradient(90deg,var(--pitch-soft),transparent 260px)}
+.ground-open{
+  appearance:none;background:none;border:0;padding:0;cursor:pointer;text-align:left;min-width:0;
+  display:flex;align-items:center;gap:12px;
+}
+.gtext{min-width:0}
+.gpin{
+  width:20px;height:24px;flex:none;
+  fill:none;stroke:var(--text-3);stroke-width:1.5;stroke-linejoin:round;
+  transition:stroke .13s ease,fill .13s ease;
+}
+.gpin .dot{fill:var(--paper);stroke:var(--text-3)}
+.ground.is-visited .gpin{stroke:var(--pitch);fill:var(--pitch)}
+.ground.is-visited .gpin .dot{fill:var(--paper);stroke:var(--pitch)}
+.ground-open:hover .gpin{stroke:var(--flood)}
+.ground.is-visited .ground-open:hover .gpin{fill:var(--flood);stroke:var(--flood)}
+.ground-name{
+  display:block;
+  font-family:"DM Serif Display",serif;font-weight:400;font-size:20px;
+  letter-spacing:-.005em;color:var(--ink);line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ground-open:hover .ground-name{color:var(--flood)}
+.ground-meta{
+  display:block;margin-top:2px;
+  font-family:"Fraunces",serif;font-style:italic;font-size:13px;color:var(--text-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ground-meta .sep{color:var(--text-3);margin:0 6px}
+.ground-cap{
+  font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text-3);
+  font-variant-numeric:tabular-nums;text-align:right;line-height:1.1;
+}
+.ground-cap small{display:block;font-size:10px;letter-spacing:.04em;margin-top:2px}
+
+/* Red-ink programme stamp — reads as a rubber stamp on paper */
+.stamp-btn{
+  appearance:none;cursor:pointer;flex:none;
+  width:78px;height:40px;position:relative;
+  background:transparent;border:1px dashed var(--line-strong);border-radius:0;
+  color:var(--text-3);font-family:"Chivo",sans-serif;font-weight:600;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;
+  transition:border-color .13s ease,color .13s ease;
+}
+.stamp-btn:hover{border-color:var(--flood);color:var(--flood)}
+.stamp-btn .stamp{
+  position:absolute;inset:0;display:grid;place-content:center;
+  border:2.5px solid var(--flood);color:var(--flood);
+  font-family:"DM Serif Display",serif;font-weight:400;letter-spacing:.08em;font-size:14px;
+  transform:rotate(-6deg) scale(1.05);
+  opacity:0;transition:opacity .18s ease, transform .18s cubic-bezier(.2,1.6,.4,1);
+  background:rgba(183,28,28,.06);
+  text-transform:uppercase;
+}
+.ground.is-visited .stamp-btn{border-color:transparent}
+.ground.is-visited .stamp-btn .lbl{opacity:0}
+.ground.is-visited .stamp-btn .stamp{opacity:1;transform:rotate(-6deg) scale(1)}
+@media (prefers-reduced-motion:reduce){
+  .stamp-btn .stamp{transition:opacity .01s}
+}
+
+/* ============ SECTION 2 — THE WORLD MAP ============ */
+.map-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.map-zooms{display:flex;gap:5px;flex-wrap:wrap}
+.map-wrap{
+  position:relative;aspect-ratio:360/136;width:100%;
+  background:var(--map-sea);border:2px solid var(--ink);border-radius:0;
+  overflow:hidden;touch-action:none;cursor:grab;
+}
+.map-wrap.dragging{cursor:grabbing}
+#worldMap{display:block;width:100%;height:100%}
+.mland{fill:var(--map-land);stroke:var(--map-edge);stroke-width:.32;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.mgrat{stroke:var(--map-grat);stroke-width:.5;fill:none;vector-effect:non-scaling-stroke}
+.mdot circle{fill:var(--text-2);opacity:.55}
+.mdot:hover circle{fill:var(--flood);opacity:1}
+.pin-body{fill:var(--flood);stroke:var(--map-pin-edge);stroke-width:1;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.pin-tick{fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;
+  stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.mpin{cursor:pointer}
+.mpin:hover .pin-body{fill:var(--flood)}
+/* Engraved-programme map: cream sea, warm sepia landmass, thin ink outline,
+   red pins with cream tick — like a globe printed in the programme's back pages. */
+:root{--map-sea:#E9DEB9;--map-land:#C7B486;--map-edge:#5A4A28;
+      --map-grat:#D9CCA4;--map-pin-edge:#5C0D0D}
+
+.map-ctrls{position:absolute;right:9px;bottom:9px;display:flex;gap:4px}
+.mapbtn{
+  appearance:none;cursor:pointer;background:var(--paper);color:var(--ink);
+  border:1px solid var(--ink);border-radius:0;
+  font-family:"Chivo",sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;min-width:28px;height:28px;padding:0 9px;line-height:1;
+}
+.mapbtn:hover{background:var(--surface-2);border-color:var(--text-3)}
+.map-tip{
+  position:absolute;pointer-events:none;z-index:5;
+  background:var(--ink);color:var(--paper);border:1px solid var(--ink);
+  padding:8px 12px;border-radius:0;font-size:12.5px;line-height:1.35;
+  box-shadow:0 4px 0 var(--flood);max-width:230px;
+}
+.map-tip b{font-family:"DM Serif Display",serif;font-weight:400;
+  display:block;font-size:15px;letter-spacing:0}
+.map-tip span{color:#C5B892;font-size:11.5px;font-style:italic;font-family:"Fraunces",serif}
+.map-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 2px 0;font-size:12.5px;color:var(--text-2)}
+.map-key{display:inline-flex;align-items:center;gap:6px}
+.map-key i{display:inline-block;width:11px;height:11px;border-radius:50%;
+  background:var(--text-3);opacity:.5}
+.map-key.done i{background:var(--flood);opacity:1;border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg)}
+.toggle{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--flood);width:15px;height:15px}
+
+/* ============ SECTION 3 — THE FEED ============ */
+.composer{padding:14px;margin-bottom:16px}
+.composer-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
+#postText,#profileName,.cmt-input{
+  width:100%;padding:10px 12px;background:var(--paper);
+  border:1px solid var(--line);border-radius:var(--radius);
+  font-size:14.5px;resize:vertical;
+}
+#postText:focus,#profileName:focus,.cmt-input:focus{border-color:var(--flood);outline:none}
+select.ground-select{
+  padding:8px 11px;background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--radius);font-size:13.5px;max-width:100%;
+}
+.photo-drop{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-family:"Chivo",sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 15px;border:1px dashed var(--line-strong);border-radius:0;color:var(--text-2);
+}
+.photo-drop:hover{border-color:var(--flood);color:var(--flood);border-style:solid}
+.photo-drop input{display:none}
+.photo-preview{position:relative;margin-top:11px;display:none}
+.photo-preview img{max-height:190px;border-radius:var(--radius);display:block;border:1px solid var(--line)}
+.photo-preview button{position:absolute;top:7px;left:7px}
+
+.feed{display:flex;flex-direction:column;gap:16px}
+.post{overflow:hidden}
+.post-head{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
+.avatar{
+  width:38px;height:38px;flex:none;border-radius:50%;
+  display:grid;place-content:center;
+  font-family:"DM Serif Display",serif;font-size:16px;font-weight:400;
+  background:var(--ink);color:var(--paper);
+  background-size:cover;background-position:center;overflow:hidden;
+}
+/* Picture-avatars keep their initials in the DOM (for a11y / copy-paste)
+   but paint the picture over the top. */
+.avatar.has-img{color:transparent}
+.avatar.sm{width:24px;height:24px;font-size:11px}
+.avatar.big{width:88px;height:88px;font-size:34px}
+.post-author{font-family:"DM Serif Display",serif;font-weight:400;font-size:17px;line-height:1.1}
+.post-at{font-family:"Fraunces",serif;font-style:italic;font-size:13px;color:var(--text-2);margin-top:1px}
+.post-at b{color:var(--flood);font-weight:600;font-style:normal;font-family:"DM Serif Display",serif}
+.post-time{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-3);white-space:nowrap}
+.post-body{padding:0 16px 12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14.5px;line-height:1.6}
+.post-photo{display:block;width:100%;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.post-actions{display:flex;gap:2px;padding:10px 12px;border-top:1px solid var(--line)}
+.act{
+  appearance:none;background:none;border:0;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:"Chivo",sans-serif;font-weight:600;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--text-2);padding:6px 10px;border-radius:0;
+}
+.act:hover{color:var(--text)}
+.act.on{color:var(--flood)}
+.act svg{width:14px;height:14px}
+.comments{border-top:1px solid var(--line);background:var(--paper-warm);padding:12px 16px}
+.cmt{display:flex;gap:10px;padding:6px 0;font-size:13.5px;align-items:center}
+.cmt .who{font-family:"DM Serif Display",serif;font-size:14px;flex:none}
+.cmt .txt{color:var(--text-2);overflow-wrap:anywhere;font-family:"Fraunces",serif}
+.cmt-form{display:flex;gap:8px;margin-top:10px}
+
+/* ============ SECTION 3 — THE PASSPORT ============ */
+/* Programme-cover treatment: cream card with a red banner and thick ink rule. */
+.passport-head{
+  display:flex;align-items:center;gap:18px;padding:22px 22px 20px;margin-bottom:20px;
+  background:var(--surface);border-radius:var(--radius);color:var(--ink);
+  border:1px solid var(--line-strong);border-top:6px solid var(--flood);
+  box-shadow:var(--shadow);position:relative;
+}
+.passport-head::after{
+  content:"";position:absolute;left:22px;right:22px;bottom:8px;height:1px;background:var(--line);
+}
+.passport-head .avatar{width:64px;height:64px;font-size:24px;background:var(--ink);color:var(--paper)}
+.passport-head h2{color:var(--ink);font-size:28px;font-family:"DM Serif Display",serif;line-height:1}
+.passport-head .since{font-family:"Fraunces",serif;font-style:italic;font-size:13px;color:var(--text-2);margin-top:4px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0;margin-bottom:24px;
+  border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+.stat{padding:16px 18px;background:var(--surface);border:0;border-radius:0;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat .v{
+  font-family:"DM Serif Display",serif;font-size:34px;font-weight:400;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:-.01em;
+}
+.stat .v .of{font-family:"Fraunces",serif;font-style:italic;font-size:14px;color:var(--text-3);letter-spacing:0}
+.stat .k{margin-top:6px}
+.stat.accent .v{color:var(--flood)}
+
+.region-list{display:flex;flex-direction:column;gap:10px;margin:12px 0 28px}
+.region{display:grid;grid-template-columns:150px 1fr 62px;gap:12px;align-items:center;font-size:13px}
+.region .rn{color:var(--text);font-family:"Fraunces",serif;font-style:italic;font-size:14px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;background:var(--paper-warm);border-radius:0;overflow:hidden;
+  border:1px solid var(--line-strong)}
+.bar i{display:block;height:100%;background:var(--pitch);transition:width .4s ease}
+.region .rv{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--text-2);text-align:right;font-variant-numeric:tabular-nums}
+
+.visited-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0;
+  margin:14px 0 28px;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+.vcard{
+  padding:12px 14px;background:var(--surface);border:0;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  border-left:3px solid var(--flood);border-radius:0;
+}
+.vcard .n{font-family:"DM Serif Display",serif;font-size:16px;letter-spacing:-.005em;color:var(--ink);line-height:1.1}
+.vcard .c{font-family:"Fraunces",serif;font-style:italic;font-size:12.5px;color:var(--text-2);margin-top:3px}
+
+.empty{
+  padding:38px 20px;text-align:center;color:var(--text-2);
+  border:1px dashed var(--line-strong);border-radius:var(--radius);
+  background:var(--surface);font-family:"Fraunces",serif;font-style:italic;
+}
+.empty strong{display:block;font-family:"DM Serif Display",serif;font-style:normal;
+  letter-spacing:-.005em;color:var(--ink);font-size:19px;margin-bottom:6px}
+
+hr.rule{border:0;border-top:2px solid var(--ink);margin:26px 0 14px}
+.section-title{display:flex;align-items:baseline;gap:11px;margin:24px 0 6px;
+  padding-bottom:6px;border-bottom:2px solid var(--ink)}
+.section-title h2{font-size:20px;font-family:"DM Serif Display",serif;color:var(--ink)}
+.section-title .n{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--text-3)}
+
+/* ============ DETAIL DIALOG ============ */
+dialog{
+  border:2px solid var(--ink);border-radius:0;padding:0;
+  background:var(--surface);color:var(--text);
+  max-width:520px;width:calc(100% - 32px);
+  box-shadow:0 4px 0 var(--ink), 0 24px 50px -18px rgba(20,15,5,.5);
+}
+dialog::backdrop{background:rgba(20,15,5,.55)}
+.dlg-head{background:var(--flood);color:#F5EED9;padding:18px 20px;position:relative;
+  border-bottom:2px solid var(--ink)}
+.dlg-head h2{color:#F5EED9;font-family:"DM Serif Display",serif;font-size:26px;padding-right:34px;line-height:1}
+.dlg-head .sub{font-family:"Fraunces",serif;font-style:italic;font-size:14px;color:#F5EED9;opacity:.85;margin-top:5px}
+.dlg-close{position:absolute;top:12px;right:12px;color:#F5EED9;border:0;background:none;
+  cursor:pointer;font-size:24px;line-height:1;padding:2px 8px;border-radius:0;opacity:.85}
+.dlg-close:hover{opacity:1}
+.dlg-body{padding:18px 20px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:0;
+  border:1px solid var(--line-strong);border-radius:0;overflow:hidden;margin-bottom:16px}
+.fact{background:var(--surface);padding:12px 14px;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.fact:nth-child(2n){border-right:0}
+.fact:nth-last-child(-n+2){border-bottom:0}
+.fact .k{font-family:"Chivo",sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-3)}
+.fact .v{font-family:"DM Serif Display",serif;font-size:22px;line-height:1.1;margin-top:3px;
+  font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:-.005em}
+.fact .v.wide{font-family:"Fraunces",serif;font-size:15px;font-weight:600;letter-spacing:0}
+.note{font-family:"Fraunces",serif;font-size:14.5px;color:var(--text-2);font-style:italic;
+  border-left:2px solid var(--flood);padding-left:12px;margin-bottom:16px;line-height:1.6}
+.dlg-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:var(--paper);flex-wrap:wrap}
+
+/* ============ TOAST / STATUS ============ */
+#toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(70px);
+  background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:0;
+  font-family:"Chivo",sans-serif;font-weight:600;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;box-shadow:0 4px 0 var(--flood);
+  opacity:0;transition:transform .22s ease,opacity .22s ease;pointer-events:none;z-index:100;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.sync-note{font-family:"Fraunces",serif;font-style:italic;font-size:12.5px;color:var(--text-3);padding:6px 2px}
+.sync-note b{color:var(--flood);font-style:normal;font-family:"Chivo";font-weight:600}
+
+@media (max-width:620px){
+  .ground{grid-template-columns:1fr auto;gap:9px}
+  .ground-cap{display:none}
+  .searchbar{top:102px}
+  .region{grid-template-columns:110px 1fr 56px}
+  .masthead-inner{min-height:64px}
+  .wordmark{width:200px;height:64px}
+  .wordmark .arch{top:5px;height:52px}
+  .wm-text{font-size:19px;letter-spacing:.005em;padding-bottom:10px}
+  .tally{padding-bottom:12px;font-size:12px}
+  .tally b{font-size:19px}
+  .turnstiles{top:66px}
+  .turnstile{padding:10px 11px 9px;font-size:11px;letter-spacing:.13em}
+  .map-zooms .chip{font-size:11px;padding:3px 9px}
+  .facts{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat .v{font-size:28px}
+  .passport-head h2{font-size:24px}
+  .visited-grid{grid-template-columns:1fr}
+}
+
+
+/* ============ HOSTED-ONLY: auth screen and profile chrome (Programme) ============ */
+/* Auth screen: a matchday programme cover — cream card with the red-and-ink
+   arch masthead across the top and a serif title. */
+.authwrap{min-height:100vh;display:grid;place-items:center;padding:26px 18px;background:var(--paper)}
+.authcard{width:100%;max-width:420px;background:var(--surface);border:2px solid var(--ink);
+  border-radius:var(--radius);box-shadow:0 6px 0 var(--flood), 0 24px 44px -20px rgba(20,15,5,.5);
+  padding:0;overflow:hidden}
+/* Red banner on the sign-in card echoes the app's own masthead. */
+.authmark{margin:0;width:auto;height:100px;background:var(--flood);
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;
+  border-bottom:2px solid var(--ink)}
+.authmark .wordmark{width:250px;height:70px}
+.authmark .arch{top:6px;height:56px}
+.arch-band{stroke:#F5EED9}
+.arch-cable{stroke:#F5EED9}
+.arch-foot{fill:#F5EED9}
+.authmark .wm-text{color:#F5EED9;padding-bottom:8px;font-size:24px}
+.authblurb{margin:16px 24px 16px;text-align:center;color:var(--text-2);
+  font-family:"Fraunces",serif;font-style:italic;font-size:14px;line-height:1.5}
+.authtabs{display:flex;gap:0;border-bottom:2px solid var(--ink);margin:0 24px 18px}
+.authtab{appearance:none;background:none;border:0;cursor:pointer;flex:1;
+  font-family:"Chivo",sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-3);padding:11px 6px;border-bottom:3px solid transparent;margin-bottom:-2px}
+.authtab:hover{color:var(--text)}
+.authtab[aria-selected="true"]{color:var(--flood);border-bottom-color:var(--flood)}
+
+form#authForm{padding:0 24px}
+.fieldlabel{display:block;font-family:"Chivo",sans-serif;font-weight:700;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--text-3);margin:14px 0 7px}
+#authForm input,#pdName,#pdUser,#pdBio{width:100%;padding:14px 14px;background:var(--paper);
+  border:1.5px solid var(--line-strong);border-radius:0;font-size:16.5px;font-family:inherit;color:var(--ink);
+  min-height:52px}
+#authForm input:focus,#pdName:focus,#pdUser:focus,#pdBio:focus{
+  border-color:var(--flood);outline:none;box-shadow:0 0 0 3px var(--flood-soft)}
+.hint{margin:6px 0 0;font-family:"Fraunces",serif;font-style:italic;font-size:12.5px;color:var(--text-3)}
+.authsubmit{width:100%;margin-top:20px;padding:12px}
+.authmsg{margin:12px 0 0;font-family:"Fraunces",serif;font-style:italic;font-size:13.5px;
+  color:var(--text-2);min-height:1.2em;text-align:center;padding:0 24px}
+.authmsg.bad{color:var(--flood);font-style:normal;font-family:"Chivo";font-weight:600;letter-spacing:.02em}
+.authmsg.good{color:var(--pitch);font-style:normal;font-family:"Chivo";font-weight:600;letter-spacing:.02em}
+.authfoot{margin:16px 24px 0;text-align:center;display:flex;gap:8px;justify-content:center;
+  flex-wrap:wrap;align-items:baseline}
+.authfoot .dot{color:var(--text-3)}
+.buildstamp{margin:16px 0 20px;text-align:center;font-family:"JetBrains Mono",monospace;
+  font-size:10.5px;letter-spacing:.05em;color:var(--text-3)}
+.linkbtn{appearance:none;background:none;border:0;cursor:pointer;padding:0;
+  color:var(--flood);font-family:"Fraunces",serif;font-style:italic;font-size:13.5px;
+  text-decoration:underline;text-underline-offset:2px}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn.at{font-family:"Chivo",sans-serif;font-style:normal;font-size:11.5px;font-weight:600;
+  color:var(--text-3);text-decoration:none;letter-spacing:.05em}
+.linkbtn.at:hover{color:var(--flood);text-decoration:underline}
+
+/* signed-in masthead button */
+.signout{margin-left:12px;padding-bottom:9px;
+  border-color:rgba(245,238,217,.5);background:transparent;color:#F5EED9}
+.signout:hover{background:#F5EED9;color:var(--flood);border-color:#F5EED9}
+.masthead-inner .tally{margin-left:auto}
+
+.viewing{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:11px 14px;
+  background:var(--flood-soft);border:1.5px solid var(--flood);border-radius:0;font-size:13.5px;
+  font-family:"Fraunces",serif;font-style:italic}
+.viewing b{font-family:"DM Serif Display",serif;font-style:normal;font-weight:400}
+
+.privacy{padding:16px 18px;margin-bottom:20px}
+.privacy-opts{display:grid;gap:8px;margin-top:12px}
+.privacy-opts label{display:grid;grid-template-columns:auto auto 1fr;align-items:baseline;gap:10px;
+  padding:11px 13px;border:1px solid var(--line);border-radius:0;cursor:pointer;font-size:13.5px}
+.privacy-opts label:hover{border-color:var(--ink);background:var(--paper-warm)}
+.privacy-opts input{accent-color:var(--flood);margin:0}
+.privacy-opts b{font-family:"DM Serif Display",serif;font-weight:400;font-size:15px}
+.privacy-opts span{color:var(--text-2);font-family:"Fraunces",serif;font-style:italic;font-size:12.5px}
+
+.passport-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+#profileDlg .dlg-body{display:block}
+.avatar-picker{display:flex;align-items:center;gap:16px;margin-top:8px;margin-bottom:8px}
+.avatar-picker .avatar{background:var(--ink);color:var(--paper);border:2px solid var(--ink)}
+.avatar-picker-btns{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.avatar-picker-btns .btn{margin:0;font-size:11px;padding:7px 14px;position:relative}
+.avatar-picker-btns label.btn{cursor:pointer}
+
+@media (max-width:620px){
+  .passport-actions{width:100%;margin-left:0}
+  .signout{margin-left:8px}
+}
+
+
+/* ============ WEIGHT PASS (Option A) — body text at medium ============ */
+/* User picked "slightly thicker": body 500, key names 600. Appended last so
+   it wins the cascade without touching every original rule. */
+body{font-weight:500}
+.ground-name,.vcard .n,.post-author,.station-head b,.fx-teams{font-weight:600}
