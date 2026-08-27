@@ -11,15 +11,17 @@ export const hasFootballKey = () => FOOTBALL_KEY.length > 10
 // calls per ground per week no matter how many people look at it.
 const mem = new Map()
 
-async function cached (kind, key, ttlMs, fetcher) {
+async function cached (kind, key, ttlMs, fetcher, { skipCache = false } = {}) {
   const k = kind + ':' + key
-  if (mem.has(k)) return mem.get(k)
+  if (!skipCache && mem.has(k)) return mem.get(k)
 
-  const cutoff = new Date(Date.now() - ttlMs).toISOString()
-  const { data: row } = await sb.from('ground_cache')
-    .select('payload, fetched_at').eq('cache_key', k)
-    .gte('fetched_at', cutoff).maybeSingle()
-  if (row) { mem.set(k, row.payload); return row.payload }
+  if (!skipCache) {
+    const cutoff = new Date(Date.now() - ttlMs).toISOString()
+    const { data: row } = await sb.from('ground_cache')
+      .select('payload, fetched_at').eq('cache_key', k)
+      .gte('fetched_at', cutoff).maybeSingle()
+    if (row) { mem.set(k, row.payload); return row.payload }
+  }
 
   try {
     const payload = await fetcher()
@@ -229,11 +231,10 @@ export const FIXTURE_COMPS = ['PL', 'CL', 'BL1', 'PD', 'SA', 'FL1', 'DED', 'PPL'
 // enough that live scores move, long enough that browsing days is free.
 export async function getWindowMatches (comp, fromStr, toStr, { skipCache = false } = {}) {
   const key = `${comp}|${fromStr}|${toStr}`
-  if (skipCache) mem.delete('fdwin:' + key)
   return cached('fdwin', key, 5 * 60e3, async () => {
     const j = await fdGet(`/competitions/${comp}/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
     return j.matches || []
-  })
+  }, { skipCache })
 }
 
 // All matches across every covered competition in a date range — ONE API
@@ -246,14 +247,14 @@ export async function getWindowMatches (comp, fromStr, toStr, { skipCache = fals
 // Scottish leagues).
 export async function getFixturesForRange (fromStr, toStr, { skipCache = false } = {}) {
   const key = `${fromStr}|${toStr}`
-  if (skipCache) { mem.delete('fdall:' + key); mem.delete('sdball:' + key) }
-
   const [fdMatches, sdbMatches] = await Promise.all([
     cached('fdall', key, 5 * 60e3, async () => {
       const j = await fdGet(`/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
       return j.matches || []
-    }).catch(() => []),
-    cached('sdball', key, 5 * 60e3, () => getSportsDbMatchesInRange(fromStr, toStr)).catch(() => [])
+    }, { skipCache }).catch(() => []),
+    cached('sdball', key, 5 * 60e3,
+      () => getSportsDbMatchesInRange(fromStr, toStr),
+      { skipCache }).catch(() => [])
   ])
 
   return { matches: [...fdMatches, ...sdbMatches], skipped: [] }
@@ -339,6 +340,48 @@ function mapSdbStatus (raw, iso) {
   return 'TIMED'
 }
 
+// TheSportsDB counterpart to the football-data path in syncPlans below. Their
+// free tier doesn't expose per-goal scorer data, so scorers stay manual on the
+// Statistics tab; final score & attendance are captured automatically.
+async function syncSdbPlan (me, plan) {
+  const eventId = String(plan.match_id).slice(4) // strip 'sdb:'
+  const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/lookupevent.php?id=${eventId}`)
+  if (!res.ok) return false
+  const e = (await res.json().catch(() => ({})))?.events?.[0]
+  if (!e) return false
+
+  const iso = e.strTimestamp
+    ? (e.strTimestamp.endsWith('Z') ? e.strTimestamp : e.strTimestamp + 'Z')
+    : (e.dateEvent && e.strTime ? `${e.dateEvent}T${e.strTime.slice(0, 8)}Z` : plan.match_date)
+  const status = mapSdbStatus(e.strStatus, iso)
+  const hg = e.intHomeScore == null ? null : Number(e.intHomeScore)
+  const ag = e.intAwayScore == null ? null : Number(e.intAwayScore)
+
+  await sb.from('match_plans').update({
+    home_goals: hg, away_goals: ag, status, synced: status === 'FINISHED'
+  }).eq('id', plan.id)
+
+  if (status !== 'FINISHED') return false
+
+  const { data: existing } = await sb.from('attended_matches')
+    .select('id').eq('user_id', me.id).eq('match_id', plan.match_id).maybeSingle()
+  if (!existing) {
+    await sb.from('attended_matches').insert({
+      user_id: me.id,
+      ground_id: null,
+      match_id: plan.match_id,
+      match_date: iso,
+      home_team: e.strHomeTeam || plan.home_team,
+      away_team: e.strAwayTeam || plan.away_team,
+      home_goals: hg,
+      away_goals: ag,
+      competition: plan.competition,
+      scorers_json: []
+    })
+  }
+  return true
+}
+
 // Convert "I'm attending" plans into real attendance once matches finish.
 // Idempotent: finished plans are flagged synced=true and never reprocessed.
 export async function syncPlans (me) {
@@ -348,8 +391,13 @@ export async function syncPlans (me) {
 
   let done = 0
   for (const plan of plans) {
-    // TheSportsDB matches aren't in football-data.org; skip auto-sync.
-    if (String(plan.match_id).startsWith('sdb:')) continue
+    // TheSportsDB matches take a different sync path (different API, no
+    // per-goal scorer data on the free tier — final score only).
+    if (String(plan.match_id).startsWith('sdb:')) {
+      try { if (await syncSdbPlan(me, plan)) done++ } catch { /* try next time */ }
+      await new Promise(r => setTimeout(r, 350))
+      continue
+    }
     try {
       const j = await fdGet(`/matches/${plan.match_id}`)
       const m = j.match

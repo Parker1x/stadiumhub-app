@@ -63,13 +63,18 @@ export default function FixturesView ({ me }) {
     return () => clearTimeout(t)
   }, [state.skipped?.length, day])
 
-  // live polling: refresh today's matches every 60s while anything is in play
+  // live polling: refresh today's matches every 60s while anything is in play.
+  // Any attend-plan on a live/just-finished match also gets synced so stats
+  // catch the final score without waiting for the next mount.
   const anyLive = (state.matches || []).some(m => m.status === 'IN_PLAY')
   useEffect(() => {
     if (!anyLive || picked || dayOffset !== 0) return
-    const t = setInterval(() => load({ skipCache: true }), 60000)
+    const t = setInterval(() => {
+      load({ skipCache: true })
+      if (me) syncPlans(me).catch(() => {})
+    }, 60000)
     return () => clearInterval(t)
-  }, [anyLive, picked, dayOffset])
+  }, [anyLive, picked, dayOffset, me?.id])
 
   // fold finished plans into stats (runs on open; cheap when nothing to do)
   useEffect(() => {
@@ -105,7 +110,11 @@ export default function FixturesView ({ me }) {
         return toast('Could not save that — try again')
       }
       setPlans(p => ({ ...p, [m.id]: data }))
-      toast("You're attending — goals will count towards your stats")
+      const past = ['FINISHED', 'AWARDED'].includes(m.status)
+      toast(past
+        ? 'Marked as attended — folding into your stats…'
+        : "You're attending — goals will count towards your stats")
+      if (past) syncPlans(me).catch(() => {})
     }
   }
 
@@ -194,8 +203,14 @@ export default function FixturesView ({ me }) {
 
 function FixtureRow ({ m, plan, onToggle }) {
   const live = m.status === 'IN_PLAY'
-  const done = m.status === 'FINISHED'
+  const done = ['FINISHED', 'AWARDED'].includes(m.status)
   const ft = m.score?.fullTime
+  const label = done
+    ? (plan ? '✓ Attended' : 'I was there')
+    : (plan ? '✓ Going' : 'Attend')
+  const title = done
+    ? (plan ? 'Marked as attended — click to undo' : 'I was at this match')
+    : (plan ? 'Attending — click to undo' : 'I am attending this match')
   return (
     <div className={'fx-row' + (live ? ' is-live' : '')}>
       <span className="fx-when mono">
@@ -208,11 +223,11 @@ function FixtureRow ({ m, plan, onToggle }) {
         {started(m.status) ? `${ft?.home ?? 0}–${ft?.away ?? 0}` : 'v'}
       </span>
       <span className="fx-away">{m.awayTeam?.shortName || m.awayTeam?.name}</span>
-      <button className={'attend-btn' + (plan ? ' on' : '')}
+      <button className={'attend-btn' + (plan ? ' on' : '') + (done ? ' past' : '')}
         aria-pressed={!!plan}
-        title={plan ? "Attending — click to undo" : 'I am attending this match'}
+        title={title}
         onClick={onToggle}>
-        {plan ? '✓ Going' : 'Attend'}
+        {label}
       </button>
     </div>
   )
