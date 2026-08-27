@@ -1,10 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { GROUNDS, REGIONS, byId, fmt } from '../lib/util.js'
 
+const HELP_STORAGE_KEY = 'gh:groundsHelpSeen'
+
 export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [q, setQ] = useState('')
+  const [showHelp, setShowHelp] = useState(() => {
+    try { return localStorage.getItem(HELP_STORAGE_KEY) !== '1' }
+    catch { return true }
+  })
 
   // debounce the search box like the original (120ms)
   useEffect(() => {
@@ -25,6 +31,7 @@ export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
 
   return (
     <section className="view" role="tabpanel">
+      {showHelp && <GroundsHelpModal onClose={() => setShowHelp(false)} />}
       <div className="searchbar">
         <div className="search-field">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -73,5 +80,46 @@ export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
         )}
       </ul>
     </section>
+  )
+}
+
+function GroundsHelpModal ({ onClose }) {
+  const [dontShow, setDontShow] = useState(false)
+
+  useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
+
+  function handleContinue () {
+    if (dontShow) {
+      try { localStorage.setItem(HELP_STORAGE_KEY, '1') } catch { /* ignore */ }
+    }
+    onClose()
+  }
+
+  return (
+    <div className="help-scrim" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="help-dlg" role="dialog" aria-modal="true" aria-labelledby="ghHelpTitle">
+        <div className="help-body">
+          <h2 id="ghHelpTitle" className="help-title">Tap a stadium for the full picture</h2>
+          <p className="help-text">
+            If you need more information for each stadium such as transport routes,
+            home/away team pubs, restaurants, hotels etc. Feel free to click on any stadium.
+          </p>
+        </div>
+        <div className="help-foot">
+          <label className="help-check">
+            <input type="checkbox" checked={dontShow}
+              onChange={e => setDontShow(e.target.checked)} />
+            <span>Do not show again.</span>
+          </label>
+          <button className="btn help-continue" onClick={handleContinue} autoFocus>
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
