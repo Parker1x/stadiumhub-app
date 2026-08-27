@@ -5,12 +5,18 @@ export default function Masthead ({ tallyN, tallyT, onSignOut }) {
   return (
     <header className="masthead">
       <div className="masthead-inner">
-        <div className="wordmark">
-          <Arch />
-          <span className="wm-text">StadiumHub</span>
+        <div className="masthead-left">
+          <div className="tally"><b>{tallyN}</b>/<span>{tallyT}</span> grounds</div>
         </div>
-        <div className="tally"><b>{tallyN}</b>/<span>{tallyT}</span> grounds</div>
-        <button className="btn signout" onClick={onSignOut}>Sign out</button>
+        <div className="masthead-center">
+          <div className="wordmark">
+            <Arch />
+            <span className="wm-text">StadiumHub</span>
+          </div>
+        </div>
+        <div className="masthead-right">
+          <button className="btn signout" onClick={onSignOut}>Sign out</button>
+        </div>
       </div>
     </header>
   )

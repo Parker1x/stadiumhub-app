@@ -68,8 +68,12 @@ button,input,textarea,select{font:inherit;color:inherit}
 }
 .masthead-inner{
   max-width:940px;margin:0 auto;padding:0 18px;
-  display:flex;align-items:flex-end;gap:14px;min-height:72px;
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:flex-end;gap:14px;min-height:72px;
 }
+.masthead-left{display:flex;align-items:flex-end;justify-content:flex-start}
+.masthead-center{display:flex;align-items:flex-end;justify-content:center}
+.masthead-right{display:flex;align-items:flex-end;justify-content:flex-end}
 .wordmark{
   position:relative;flex:none;
   display:flex;align-items:flex-end;justify-content:center;
@@ -92,11 +96,11 @@ button,input,textarea,select{font:inherit;color:inherit}
   letter-spacing:.005em;color:#F5EED9;line-height:1;padding-bottom:10px;text-transform:none;
 }
 .tally{
-  margin-left:auto;padding-bottom:16px;display:flex;align-items:baseline;gap:5px;
+  padding-bottom:16px;display:flex;align-items:baseline;gap:5px;
   font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
   font-size:12.5px;color:#F5EED9;opacity:.75;letter-spacing:.02em;
 }
-.tally b{color:#F5EED9;opacity:1;font-family:"DM Serif Display",serif;font-size:22px;
+.tally b{color:#F5EED9;opacity:1;font-family:"DM Serif Display",serif;font-size:16px;
   font-weight:400;letter-spacing:0}
 
 /* Table of contents — cream tab strip below the red band */
@@ -472,8 +476,8 @@ dialog::backdrop{background:rgba(20,15,5,.55)}
   .wordmark{width:200px;height:64px}
   .wordmark .arch{top:5px;height:52px}
   .wm-text{font-size:19px;letter-spacing:.005em;padding-bottom:10px}
-  .tally{padding-bottom:12px;font-size:12px}
-  .tally b{font-size:19px}
+  .tally{padding-bottom:12px;font-size:11.5px}
+  .tally b{font-size:14px}
   .turnstiles{top:66px}
   .turnstile{padding:10px 11px 9px;font-size:11px;letter-spacing:.13em}
   .map-zooms .chip{font-size:11px;padding:3px 9px}
@@ -538,11 +542,11 @@ form#authForm{padding:0 24px}
   color:var(--text-3);text-decoration:none;letter-spacing:.05em}
 .linkbtn.at:hover{color:var(--flood);text-decoration:underline}
 
-/* signed-in masthead button */
-.signout{margin-left:12px;padding-bottom:9px;
-  border-color:rgba(245,238,217,.5);background:transparent;color:#F5EED9}
-.signout:hover{background:#F5EED9;color:var(--flood);border-color:#F5EED9}
-.masthead-inner .tally{margin-left:auto}
+/* signed-in masthead button — solid cream chip against the red banner */
+.signout{padding:7px 14px 9px;
+  border:1.5px solid #F5EED9;background:#F5EED9;color:var(--flood);
+  font-weight:600;letter-spacing:.04em}
+.signout:hover{background:transparent;color:#F5EED9;border-color:#F5EED9}
 
 .viewing{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:11px 14px;
   background:var(--flood-soft);border:1.5px solid var(--flood);border-radius:0;font-size:13.5px;
@@ -569,7 +573,7 @@ form#authForm{padding:0 24px}
 
 @media (max-width:620px){
   .passport-actions{width:100%;margin-left:0}
-  .signout{margin-left:8px}
+  .signout{padding:6px 11px 7px;font-size:12px}
 }
 
 

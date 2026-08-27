@@ -31,9 +31,8 @@
 .linkbtn:hover{color:var(--text)}
 .linkbtn.at{font-size:12.5px;color:var(--text-3);text-decoration:none}
 .linkbtn.at:hover{color:var(--flood);text-decoration:underline}
-.signout{margin-left:12px;padding-bottom:6px;border-color:#3D4A61;background:transparent;color:#C8D0DE}
-.signout:hover{background:rgba(255,255,255,.08);color:#fff;border-color:#5A6A85}
-.masthead-inner .tally{margin-left:auto}
+/* .signout and .masthead-inner .tally now live in base.css only — the
+   masthead sits on the red banner, so it takes the cream-on-red styling. */
 .viewing{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:9px 13px;
   background:var(--flood-soft);border:1px solid var(--flood);border-radius:var(--radius);font-size:13.5px}
 .privacy{padding:14px;margin-bottom:18px}
@@ -49,7 +48,6 @@
 .passport-actions .btn:hover{background:rgba(255,255,255,.08);color:#fff;border-color:#5A6A85}
 @media (max-width:620px){
   .passport-actions{width:100%;margin-left:0}
-  .signout{margin-left:8px}
 }
 
 /* The original dialog element styles assumed <dialog>; the React modal uses

@@ -58,16 +58,15 @@ async function fdGet (path) {
 }
 
 // ---- rolling-minute rate gate -------------------------------------------
-// The free tier allows 10 requests/minute and bursts of retries were eating
-// the whole budget at once. Every API call passes through here: max 8 per
-// rolling 60s, anything beyond waits its turn. Self-regulating — no user
-// retry whack-a-mole.
+// The free tier allows 10 requests/minute. Every API call passes through
+// here: max 10 per rolling 60s, anything beyond waits its turn. Matches the
+// exact free-tier ceiling so all 10 covered competitions load in one burst.
 const rate = { stamps: [] }
 async function rateGate () {
   for (;;) {
     const now = Date.now()
     rate.stamps = rate.stamps.filter(t => now - t < 60000)
-    if (rate.stamps.length < 9) { rate.stamps.push(now); return }
+    if (rate.stamps.length < 10) { rate.stamps.push(now); return }
     const wait = 60000 - (now - rate.stamps[0]) + 250
     await new Promise(r => setTimeout(r, Math.max(wait, 500)))
   }
@@ -225,7 +224,8 @@ export async function syncAttendance (me, visited) {
 // ===========================================================================
 
 // Free-tier competitions worth showing in a FOTMOB-style list.
-export const FIXTURE_COMPS = ['PL', 'CL', 'BL1', 'PD', 'SA', 'FL1', 'DED', 'PPL', 'BSA']
+// PL + Championship + top-5 European + Champions League + a few more.
+export const FIXTURE_COMPS = ['PL', 'ELC', 'CL', 'BL1', 'PD', 'SA', 'FL1', 'DED', 'PPL', 'BSA']
 
 // All matches of one competition in a date range. Cached 5 minutes: short
 // enough that live scores move, long enough that browsing days is free.
@@ -237,20 +237,26 @@ export async function getWindowMatches (comp, fromStr, toStr, { skipCache = fals
   }, { skipCache })
 }
 
-// All matches across every covered competition in a date range — ONE API
-// call. football-data.org's /v4/matches endpoint returns the lot (64-81
-// matches for a weekend), which replaces the old per-competition loop that
-// burned 9 requests and kept tripping the rate limit.
+// All matches across every covered competition in a date range.
 //
-// We also merge in TheSportsDB for the English/Scottish competitions that
-// football-data.org's free tier doesn't cover (EFL Cup, FA Cup, League 1/2,
-// Scottish leagues).
+// We used to hit /matches?dateFrom=…&dateTo=… (a single call), but the free
+// tier's aggregate endpoint is unreliable — it returns count:0 for many dates
+// even when per-competition queries have real fixtures (e.g. it missed
+// Crystal Palace v Man City on 2026-08-28). Per-comp queries in parallel are
+// the trustworthy way. The rate gate spaces them inside the 10 req/min limit.
+//
+// TheSportsDB is merged in alongside for competitions the free tier omits
+// (EFL Cup, FA Cup, League 1/2, Scottish leagues).
 export async function getFixturesForRange (fromStr, toStr, { skipCache = false } = {}) {
   const key = `${fromStr}|${toStr}`
   const [fdMatches, sdbMatches] = await Promise.all([
     cached('fdall', key, 5 * 60e3, async () => {
-      const j = await fdGet(`/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
-      return j.matches || []
+      const results = await Promise.all(FIXTURE_COMPS.map(comp =>
+        fdGet(`/competitions/${comp}/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
+          .then(j => j.matches || [])
+          .catch(() => [])
+      ))
+      return results.flat()
     }, { skipCache }).catch(() => []),
     cached('sdball', key, 5 * 60e3,
       () => getSportsDbMatchesInRange(fromStr, toStr),
