@@ -232,16 +232,17 @@ function FixtureRow ({ m, plan, onToggle }) {
     : (plan ? 'Attending — click to undo' : 'I am attending this match')
   return (
     <div className={'fx-row' + (live ? ' is-live' : '')}>
-      <span className="fx-when mono">
-        {live ? <span className="fxtag">LIVE</span>
-          : done ? <span className="fx-ft">FT</span>
-          : fmtKick(m.utcDate)}
-      </span>
-      <span className="fx-home">{m.homeTeam?.shortName || m.homeTeam?.name}</span>
-      <span className="fx-score mono">
-        {started(m.status) ? `${ft?.home ?? 0}–${ft?.away ?? 0}` : 'v'}
-      </span>
-      <span className="fx-away">{m.awayTeam?.shortName || m.awayTeam?.name}</span>
+      <div className="fx-teams">
+        <span className="fx-home">{m.homeTeam?.shortName || m.homeTeam?.name}</span>
+        <span className="fx-meet mono">
+          {live && <span className="fxtag">LIVE</span>}
+          {done && <span className="fx-ft">FT</span>}
+          {started(m.status)
+            ? <span className="fx-score">{`${ft?.home ?? 0}–${ft?.away ?? 0}`}</span>
+            : <span className="fx-time">{fmtKick(m.utcDate)}</span>}
+        </span>
+        <span className="fx-away">{m.awayTeam?.shortName || m.awayTeam?.name}</span>
+      </div>
       <button className={'attend-btn' + (plan ? ' on' : '') + (done ? ' past' : '')}
         aria-pressed={!!plan}
         title={title}

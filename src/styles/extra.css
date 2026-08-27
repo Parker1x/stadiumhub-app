@@ -122,20 +122,29 @@
   font-size:12.5px;letter-spacing:.02em}
 .fx-comp-head b{font-family:"Oswald",sans-serif;font-weight:600;letter-spacing:.06em;
   text-transform:uppercase;font-size:11.5px}
-.fx-row{display:grid;grid-template-columns:64px 1fr 52px 1fr 92px;gap:8px;align-items:center;
+/* Row = a 3-column grid: [spacer that mirrors the button width][teams][button].
+   Both edges reserve the same width so the teams block sits centred on the row
+   while the attend button hugs the right edge. */
+.fx-row{display:grid;grid-template-columns:92px 1fr 92px;gap:8px;align-items:center;
   padding:9px 10px;border-bottom:1px dashed var(--line);font-size:14px}
 .fx-row:last-child{border-bottom:0}
 .fx-row.is-live{background:var(--flood-soft)}
-.fx-when{text-align:center;color:var(--text-3);font-size:12.5px}
+.fx-teams{grid-column:2;display:flex;align-items:baseline;justify-content:center;
+  gap:16px;min-width:0}
+.fx-home,.fx-away{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:600}
+.fx-meet{display:inline-flex;align-items:baseline;gap:6px;color:var(--text-3);
+  font-size:12.5px;flex:none}
+.fx-time{font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.fx-score{font-weight:700;color:var(--text)}
 .fx-ft{font-weight:700;color:var(--text-2)}
-.fx-home,.fx-away{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fx-away{text-align:right}
-.fx-score{text-align:center;font-weight:700}
-.attend-btn{appearance:none;cursor:pointer;font-family:"Oswald",sans-serif;font-size:10.5px;
-  letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:2px;
+.attend-btn{grid-column:3;justify-self:end;appearance:none;cursor:pointer;
+  font-family:"Oswald",sans-serif;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:6px 8px;border-radius:2px;
   background:var(--surface);color:var(--text-2);border:1.5px solid var(--line-strong)}
 .attend-btn:hover{border-color:var(--flood);color:var(--flood)}
 .attend-btn.on{background:var(--pitch);border-color:var(--pitch);color:#F5EED9}
 @media (max-width:620px){
-  .fx-row{grid-template-columns:52px 1fr 44px 1fr 74px;font-size:13px}
+  .fx-row{grid-template-columns:74px 1fr 74px;font-size:13px}
+  .fx-teams{gap:10px}
 }
