@@ -208,6 +208,60 @@
   .map-close,.stats-close{top:8px;right:8px;width:32px;height:32px;font-size:20px}
 }
 
+/* ---- Match preview modal (click a fixture row) ---- */
+.mp-scrim{position:fixed;inset:0;z-index:65;background:rgba(17,12,4,.4);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:grid;place-items:center;padding:18px}
+.mp-dlg{position:relative;width:min(600px,100%);max-height:92vh;overflow-y:auto;
+  background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);box-shadow:0 24px 60px -20px rgba(20,15,5,.55)}
+.mp-close{position:absolute;top:12px;right:12px;z-index:2;
+  width:36px;height:36px;border-radius:50%;
+  border:1.5px solid #F5EED9;background:var(--flood);color:#F5EED9;
+  cursor:pointer;font-size:22px;line-height:1;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px -1px rgba(0,0,0,.25)}
+.mp-close:hover{background:#F5EED9;color:var(--flood)}
+.mp-head{background:var(--flood);color:#F5EED9;padding:18px 20px 20px}
+.mp-comp{display:inline-flex;align-items:center;gap:6px;font-family:"Oswald",sans-serif;
+  font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  opacity:.9;margin-bottom:14px}
+.mp-comp img{background:#F5EED9;border-radius:2px}
+.mp-scoreline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
+.mp-team{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.mp-team img{background:#F5EED9;border-radius:6px;padding:3px}
+.mp-team-name{font-family:"DM Serif Display",serif;font-size:17px;line-height:1.15;
+  color:#F5EED9}
+.mp-mid{text-align:center;min-width:100px}
+.mp-score{font-family:"DM Serif Display",serif;font-size:40px;line-height:1;color:#F5EED9;
+  letter-spacing:.02em}
+.mp-kick{font-family:"JetBrains Mono",monospace;font-size:22px;color:#F5EED9;line-height:1}
+.mp-date{margin-top:4px;font-family:"Fraunces",serif;font-style:italic;font-size:12.5px;
+  color:rgba(245,238,217,.85)}
+.mp-panel{padding:18px 20px;border-top:1px solid var(--line)}
+.mp-panel .eyebrow{margin:0 0 8px}
+.mp-mins{color:var(--flood);font-weight:700}
+.mp-empty{padding:16px 20px;color:var(--text-2);font-family:"Fraunces",serif;
+  font-style:italic;font-size:13.5px;border-top:1px solid var(--line);background:var(--surface-2)}
+.mp-hint{margin:0 0 10px;color:var(--text-2);font-size:13.5px;line-height:1.5}
+.mp-links{display:flex;gap:10px;flex-wrap:wrap}
+.mp-link{text-decoration:none;padding:8px 14px;background:var(--flood);color:#F5EED9;
+  border:1.5px solid var(--flood);font-family:"Oswald",sans-serif;font-size:12px;
+  font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:2px}
+.mp-link:hover{background:var(--ink);border-color:var(--ink)}
+.mp-stats{width:100%;border-collapse:collapse;font-size:14px}
+.mp-stats td{padding:6px 4px;border-bottom:1px dashed var(--line)}
+.mp-stats tr:last-child td{border-bottom:0}
+.mp-stats .mp-h,.mp-stats .mp-a{width:50px;font-weight:700;font-size:16px;color:var(--text)}
+.mp-stats .mp-h{text-align:right}
+.mp-stats .mp-a{text-align:left}
+.mp-stats .mp-lbl{text-align:center;color:var(--text-2);font-size:12.5px;
+  font-family:"Oswald",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+/* Row is clickable now — subtle affordance and a keyboard focus ring. */
+.fx-row{cursor:pointer;transition:background-color .12s}
+.fx-row:hover{background:var(--surface-2)}
+.fx-row:focus-visible{outline:2px solid var(--flood);outline-offset:-2px}
+
 /* ---- Grounds tab welcome modal ---- */
 .help-scrim{position:fixed;inset:0;z-index:70;
   background:rgba(17,12,4,.35);

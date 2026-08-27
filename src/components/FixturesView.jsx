@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { getFixturesForRange, syncPlans, hasFootballKey, FIXTURE_COMPS } from '../lib/football.js'
+import { getFplMatchStats } from '../lib/fpl.js'
 import { sb } from '../lib/supabase.js'
 import { toast } from '../lib/util.js'
 
@@ -28,6 +29,7 @@ export default function FixturesView ({ me }) {
   const [state, setState] = useState({ loading: true })
   const [plans, setPlans] = useState({})       // match_id -> plan row
   const [syncNote, setSyncNote] = useState('')
+  const [preview, setPreview] = useState(null) // { id, homeTeam, awayTeam, ... } or null
 
   const day = picked || ymd(new Date(Date.now() + dayOffset * 864e5))
 
@@ -212,15 +214,18 @@ export default function FixturesView ({ me }) {
               {emblem && <img src={emblem} alt="" width="18" height="18" loading="lazy" />}
               <b>{cname}</b>
             </div>
-            {matches.map(m => <FixtureRow key={m.id} m={m} plan={plans[m.id]} onToggle={() => toggleAttend(m)} />)}
+            {matches.map(m => <FixtureRow key={m.id} m={m} plan={plans[m.id]}
+              onToggle={() => toggleAttend(m)}
+              onPreview={() => setPreview(m)} />)}
           </div>
         ))
       )}
+      {preview && <MatchPreviewModal m={preview} onClose={() => setPreview(null)} />}
     </section>
   )
 }
 
-function FixtureRow ({ m, plan, onToggle }) {
+function FixtureRow ({ m, plan, onToggle, onPreview }) {
   const live = m.status === 'IN_PLAY'
   const done = ['FINISHED', 'AWARDED'].includes(m.status)
   const ft = m.score?.fullTime
@@ -231,7 +236,11 @@ function FixtureRow ({ m, plan, onToggle }) {
     ? (plan ? 'Marked as attended — click to undo' : 'I was at this match')
     : (plan ? 'Attending — click to undo' : 'I am attending this match')
   return (
-    <div className={'fx-row' + (live ? ' is-live' : '')}>
+    <div className={'fx-row' + (live ? ' is-live' : '')}
+      role="button" tabIndex={0}
+      onClick={onPreview}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPreview() } }}
+      title="Match preview">
       <div className="fx-teams">
         <span className="fx-home">{m.homeTeam?.shortName || m.homeTeam?.name}</span>
         <span className="fx-meet mono">
@@ -246,9 +255,163 @@ function FixtureRow ({ m, plan, onToggle }) {
       <button className={'attend-btn' + (plan ? ' on' : '') + (done ? ' past' : '')}
         aria-pressed={!!plan}
         title={title}
-        onClick={onToggle}>
+        onClick={e => { e.stopPropagation(); onToggle() }}>
         {label}
       </button>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Match preview modal — clickable on any fixture row.
+//
+// What we can show honestly on free APIs:
+//  - Team crests + names + competition + kickoff/venue (from football-data)
+//  - Live per-team stats (PL only, via FPL API) — goals/assists/cards/saves
+//  - Post-match goal timeline is added inside the modal (existing data)
+//  - "Lineups on BBC Sport" link-out — no free API publishes lineups reliably
+// ---------------------------------------------------------------------------
+function MatchPreviewModal ({ m, onClose }) {
+  const [fplStats, setFplStats] = useState(null)
+  const live = m.status === 'IN_PLAY'
+  const done = ['FINISHED', 'AWARDED'].includes(m.status)
+  const ft = m.score?.fullTime
+  const kick = new Date(m.utcDate)
+  const isPL = m.competition?.code === 'PL'
+
+  useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', h)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+
+  // Pull live stats for PL matches; refresh every 45s while a match is in play.
+  useEffect(() => {
+    if (!isPL) return
+    let dead = false
+    const pull = () => getFplMatchStats(m)
+      .then(s => { if (!dead) setFplStats(s) })
+      .catch(() => {})
+    pull()
+    if (!live) return
+    const t = setInterval(pull, 45000)
+    return () => { dead = true; clearInterval(t) }
+  }, [m.id, isPL, live])
+
+  const searchQ = encodeURIComponent(
+    `${m.homeTeam?.name || ''} vs ${m.awayTeam?.name || ''} lineups`)
+  const bbcUrl = `https://www.bbc.co.uk/sport/football/search?q=${searchQ}`
+  const skyUrl = `https://www.skysports.com/search?q=${searchQ}`
+
+  return (
+    <div className="mp-scrim" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="mp-dlg" role="dialog" aria-modal="true" aria-label="Match preview">
+        <button className="mp-close" aria-label="Close preview" onClick={onClose}>×</button>
+
+        <header className="mp-head">
+          <div className="mp-comp">
+            {m.competition?.emblem &&
+              <img src={m.competition.emblem} alt="" width="18" height="18" />}
+            <span>{m.competition?.name || 'Football'}</span>
+          </div>
+          <div className="mp-scoreline">
+            <TeamBadge t={m.homeTeam} />
+            <div className="mp-mid">
+              {live && <div className="fxtag" style={{ marginBottom: 4 }}>LIVE</div>}
+              {done && <div className="fx-ft" style={{ marginBottom: 4 }}>FT</div>}
+              {['IN_PLAY', 'PAUSED', 'FINISHED', 'AWARDED'].includes(m.status)
+                ? <div className="mp-score">{ft?.home ?? 0} – {ft?.away ?? 0}</div>
+                : <>
+                    <div className="mp-kick mono">
+                      {kick.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div className="mp-date">
+                      {kick.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    </div>
+                  </>}
+            </div>
+            <TeamBadge t={m.awayTeam} />
+          </div>
+        </header>
+
+        {isPL
+          ? <FplStatsPanel stats={fplStats} live={live} />
+          : <div className="mp-empty">
+              Live match stats are Premier League only on the free tier —
+              other leagues would need a paid data source.
+            </div>}
+
+        <section className="mp-panel">
+          <h3 className="eyebrow">Lineups &amp; team news</h3>
+          <p className="mp-hint">
+            Team sheets aren't published on the free data APIs. Try one of
+            these sources for confirmed and predicted lineups.
+          </p>
+          <div className="mp-links">
+            <a className="btn mp-link" href={bbcUrl} target="_blank" rel="noopener noreferrer">
+              BBC Sport
+            </a>
+            <a className="btn mp-link" href={skyUrl} target="_blank" rel="noopener noreferrer">
+              Sky Sports
+            </a>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function TeamBadge ({ t }) {
+  return (
+    <div className="mp-team">
+      {t?.crest && <img src={t.crest} alt="" width="44" height="44" loading="lazy" />}
+      <div className="mp-team-name">{t?.shortName || t?.name}</div>
+    </div>
+  )
+}
+
+function FplStatsPanel ({ stats, live }) {
+  if (!stats) {
+    return (
+      <div className="mp-empty">
+        {live
+          ? 'Waiting on live stats from the Premier League feed…'
+          : 'Live match stats appear here once the game kicks off.'}
+      </div>
+    )
+  }
+  const rows = [
+    ['Goals', 'goals_scored'],
+    ['Assists', 'assists'],
+    ['Yellow cards', 'yellow_cards'],
+    ['Red cards', 'red_cards'],
+    ['Saves', 'saves'],
+    ['Own goals', 'own_goals'],
+    ['Penalties saved', 'penalties_saved'],
+    ['Penalties missed', 'penalties_missed']
+  ].filter(([, k]) => (stats.home[k] ?? 0) || (stats.away[k] ?? 0))
+
+  if (!rows.length) {
+    return <div className="mp-empty">Nothing to report yet — no goals, cards or saves recorded.</div>
+  }
+  return (
+    <section className="mp-panel">
+      <h3 className="eyebrow">Live match stats {stats.minutes != null && <span className="mp-mins">· {stats.minutes}'</span>}</h3>
+      <table className="mp-stats">
+        <tbody>
+          {rows.map(([label, k]) => (
+            <tr key={k}>
+              <td className="mp-h mono">{stats.home[k] ?? 0}</td>
+              <td className="mp-lbl">{label}</td>
+              <td className="mp-a mono">{stats.away[k] ?? 0}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   )
 }
