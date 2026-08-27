@@ -7,10 +7,8 @@ import AuthGate from './components/AuthGate.jsx'
 import Masthead, { Turnstiles } from './components/Masthead.jsx'
 import GroundsView from './components/GroundsView.jsx'
 import FixturesView from './components/FixturesView.jsx'
-import MapView from './components/MapView.jsx'
 import FeedView from './components/FeedView.jsx'
 import PassportView from './components/PassportView.jsx'
-import StatsView from './components/StatsView.jsx'
 import GroundDetail from './components/GroundDetail.jsx'
 import ProfileDialog from './components/ProfileDialog.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
@@ -26,7 +24,7 @@ export default function App () {
   const [view, setView] = useState(() => {
     // Initial tab comes from ?tab=… so refresh (and shared URLs) restore it.
     const t = new URLSearchParams(window.location.search).get('tab')
-    return ['fixtures', 'grounds', 'feed', 'passport', 'stats'].includes(t) ? t : 'fixtures'
+    return ['fixtures', 'grounds', 'feed', 'passport'].includes(t) ? t : 'fixtures'
   })
   const [detailId, setDetailId] = useState(null)
   const [profileDlgOpen, setProfileDlgOpen] = useState(false)
@@ -241,11 +239,6 @@ export default function App () {
                   onEditProfile={() => setProfileDlgOpen(true)}
                   onViewProfile={viewProfile}
                   onBackToMine={backToMine} />
-              </ErrorBoundary>
-            )}
-            {view === 'stats' && !readOnly && (
-              <ErrorBoundary key="stats">
-                <StatsView me={me} visited={visited} />
               </ErrorBoundary>
             )}
           </main>

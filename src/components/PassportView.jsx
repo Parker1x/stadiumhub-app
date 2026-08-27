@@ -3,11 +3,13 @@ import { GROUNDS, byId, initials, fmt } from '../lib/util.js'
 import { sb } from '../lib/supabase.js'
 import { toast } from '../lib/util.js'
 import { PostCard } from './FeedView.jsx'
+import StatsView from './StatsView.jsx'
 
 export default function PassportView ({ me, subject, readOnly, visited, posts,
                                         onEditProfile, onViewProfile, onBackToMine }) {
   const who = subject || me
   const n = Object.keys(visited).length
+  const [showStats, setShowStats] = useState(false)
 
   const vis = useMemo(() =>
     Object.keys(visited).map(id => byId[id]).filter(Boolean), [visited])
@@ -19,6 +21,20 @@ export default function PassportView ({ me, subject, readOnly, visited, posts,
 
   return (
     <section className="view" role="tabpanel">
+      {showStats && !readOnly && (
+        <StatsModal me={me} visited={visited} onClose={() => setShowStats(false)} />
+      )}
+      {!readOnly && (
+        <div className="statsview-banner">
+          <button className="btn statsview-open" onClick={() => setShowStats(true)}>
+            More Stats
+          </button>
+          <button className="statsview-prompt" onClick={() => setShowStats(true)}>
+            Want to see more in depth stats?
+            <span className="statsview-cta"> Click here</span>
+          </button>
+        </div>
+      )}
       <div className="passport-head">
         <div className="avatar">{initials(who.display_name || who.username)}</div>
         <div style={{ minWidth: 0 }}>
@@ -154,6 +170,28 @@ function RegionList ({ vis }) {
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function StatsModal ({ me, visited, onClose }) {
+  useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', h)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+  return (
+    <div className="stats-scrim" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="stats-dlg" role="dialog" aria-modal="true" aria-label="Statistics">
+        <button className="stats-close" aria-label="Close statistics" onClick={onClose}>×</button>
+        <div className="stats-body">
+          <StatsView me={me} visited={visited} />
+        </div>
+      </div>
     </div>
   )
 }

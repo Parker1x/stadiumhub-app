@@ -27,8 +27,7 @@ export function Turnstiles ({ view, onView, counts }) {
     ['fixtures', 'Fixtures', ''],
     ['grounds', 'Grounds', counts.grounds],
     ['feed', 'Matchday', counts.feed],
-    ['passport', 'My Profile', counts.passport],
-    ['stats', 'Statistics', '']
+    ['passport', 'My Profile', counts.passport]
   ]
   return (
     <nav className="turnstiles">
