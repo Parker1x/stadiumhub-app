@@ -341,8 +341,9 @@ function mapSdbStatus (raw, iso) {
 }
 
 // TheSportsDB counterpart to the football-data path in syncPlans below. Their
-// free tier doesn't expose per-goal scorer data, so scorers stay manual on the
-// Statistics tab; final score & attendance are captured automatically.
+// free tier exposes /lookuptimeline.php with per-goal scorer + minute, so we
+// get "goals seen" and "players seen scoring" for EFL Cup / L1 / L2 / Scottish
+// matches without a paid API.
 async function syncSdbPlan (me, plan) {
   const eventId = String(plan.match_id).slice(4) // strip 'sdb:'
   const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/lookupevent.php?id=${eventId}`)
@@ -363,10 +364,13 @@ async function syncSdbPlan (me, plan) {
 
   if (status !== 'FINISHED') return false
 
+  const goals = await fetchSdbGoals(eventId, e.idHomeTeam)
+
   const { data: existing } = await sb.from('attended_matches')
     .select('id').eq('user_id', me.id).eq('match_id', plan.match_id).maybeSingle()
-  if (!existing) {
-    await sb.from('attended_matches').insert({
+  let rowId = existing?.id
+  if (!rowId) {
+    const { data: made } = await sb.from('attended_matches').insert({
       user_id: me.id,
       ground_id: null,
       match_id: plan.match_id,
@@ -376,10 +380,33 @@ async function syncSdbPlan (me, plan) {
       home_goals: hg,
       away_goals: ag,
       competition: plan.competition,
-      scorers_json: []
-    })
+      scorers_json: goals
+    }).select('id').single()
+    rowId = made?.id
+  }
+  if (rowId && goals.length) {
+    await sb.from('goal_events').upsert(
+      goals.map(g => ({ user_id: me.id, match_row_id: rowId, ...g })),
+      { onConflict: 'match_row_id,player,minute', ignoreDuplicates: true })
   }
   return true
+}
+
+async function fetchSdbGoals (eventId, homeTeamId) {
+  try {
+    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/lookuptimeline.php?id=${eventId}`)
+    if (!res.ok) return []
+    const j = await res.json().catch(() => ({}))
+    return (j.timeline || [])
+      .filter(t => (t.strTimeline || '').toLowerCase() === 'goal')
+      .map(t => ({
+        player: t.strPlayer || 'Unknown',
+        team_side: String(t.idTeam) === String(homeTeamId) ? 'home' : 'away',
+        minute: t.intTime ? Number(t.intTime) : null,
+        penalty: /penalty/i.test(t.strTimelineDetail || ''),
+        own_goal: /own\s*goal/i.test(t.strTimelineDetail || '')
+      }))
+  } catch { return [] }
 }
 
 // Convert "I'm attending" plans into real attendance once matches finish.
