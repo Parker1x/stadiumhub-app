@@ -23,7 +23,11 @@ export default function App () {
   const [visited, setVisited] = useState({})     // ground_id -> { visited_on }
   const [posts, setPosts] = useState([])
   const [readOnly, setReadOnly] = useState(false)
-  const [view, setView] = useState('fixtures')
+  const [view, setView] = useState(() => {
+    // Initial tab comes from ?tab=… so refresh (and shared URLs) restore it.
+    const t = new URLSearchParams(window.location.search).get('tab')
+    return ['fixtures', 'grounds', 'map', 'feed', 'passport', 'stats'].includes(t) ? t : 'fixtures'
+  })
   const [detailId, setDetailId] = useState(null)
   const [profileDlgOpen, setProfileDlgOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
@@ -35,6 +39,16 @@ export default function App () {
     const t = setTimeout(() => setToastMsg(''), 2400)
     return () => clearTimeout(t)
   }, [toastMsg])
+
+  // Keep ?tab=… on the URL so refresh lands on the same section. Default
+  // (fixtures) is omitted for a clean URL.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (view === 'fixtures') p.delete('tab'); else p.set('tab', view)
+    const qs = p.toString()
+    window.history.replaceState(null, '',
+      window.location.pathname + (qs ? '?' + qs : '') + window.location.hash)
+  }, [view])
 
   // ------------------------------------------------------------ data loads --
   const refreshPosts = useCallback(async (userId) => {

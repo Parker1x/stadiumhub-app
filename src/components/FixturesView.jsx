@@ -15,14 +15,33 @@ function fmtKick (utc) {
 const started = s => ['IN_PLAY', 'FINISHED', 'AWARDED', 'PAUSED'].includes(s)
 
 export default function FixturesView ({ me }) {
-  // which day is selected: offset from today (-1, 0, +1) or a picked date
-  const [dayOffset, setDayOffset] = useState(0)
-  const [picked, setPicked] = useState('')     // custom date from the filter
+  // which day is selected: offset from today (-1, 0, +1) or a picked date.
+  // Persisted to ?day= / ?date= so refresh restores the same view.
+  const [dayOffset, setDayOffset] = useState(() => {
+    const d = new URLSearchParams(window.location.search).get('day')
+    return d === 'yesterday' ? -1 : d === 'tomorrow' ? 1 : 0
+  })
+  const [picked, setPicked] = useState(() => {
+    const d = new URLSearchParams(window.location.search).get('date')
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''
+  })
   const [state, setState] = useState({ loading: true })
   const [plans, setPlans] = useState({})       // match_id -> plan row
   const [syncNote, setSyncNote] = useState('')
 
   const day = picked || ymd(new Date(Date.now() + dayOffset * 864e5))
+
+  // Sync current day selection to the URL so refresh keeps the same view.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (picked) { p.set('date', picked); p.delete('day') }
+    else if (dayOffset === -1) { p.set('day', 'yesterday'); p.delete('date') }
+    else if (dayOffset === 1) { p.set('day', 'tomorrow'); p.delete('date') }
+    else { p.delete('day'); p.delete('date') }
+    const qs = p.toString()
+    window.history.replaceState(null, '',
+      window.location.pathname + (qs ? '?' + qs : '') + window.location.hash)
+  }, [dayOffset, picked])
 
   // load plans once
   useEffect(() => {
