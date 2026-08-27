@@ -26,7 +26,7 @@ export default function App () {
   const [view, setView] = useState(() => {
     // Initial tab comes from ?tab=… so refresh (and shared URLs) restore it.
     const t = new URLSearchParams(window.location.search).get('tab')
-    return ['fixtures', 'grounds', 'map', 'feed', 'passport', 'stats'].includes(t) ? t : 'fixtures'
+    return ['fixtures', 'grounds', 'feed', 'passport', 'stats'].includes(t) ? t : 'fixtures'
   })
   const [detailId, setDetailId] = useState(null)
   const [profileDlgOpen, setProfileDlgOpen] = useState(false)
@@ -208,7 +208,7 @@ export default function App () {
             onSignOut={() => { sb.auth.signOut(); location.reload() }}
           />
           <Turnstiles view={view} onView={setView}
-            counts={{ grounds: '', map: nVisited, feed: posts.length, passport: nVisited }} />
+            counts={{ grounds: '', feed: posts.length, passport: nVisited }} />
           <main>
             {readOnly && subject && (
               <div className="viewing">
@@ -227,12 +227,7 @@ export default function App () {
                   onToggle={toggleVisit} onOpen={id => setDetailId(id)} />
               </ErrorBoundary>
             )}
-            {view === 'map' && (
-              <ErrorBoundary key="map">
-                <MapView visited={visited} onOpen={id => setDetailId(id)} />
-              </ErrorBoundary>
-            )}
-            {view === 'feed' && (
+{view === 'feed' && (
               <ErrorBoundary key="feed">
                 <FeedView me={me} posts={posts} readOnly={readOnly}
                   onRefresh={refreshPosts} visited={visited}

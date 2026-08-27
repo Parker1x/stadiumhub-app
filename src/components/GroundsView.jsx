@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { GROUNDS, REGIONS, byId, fmt } from '../lib/util.js'
+import MapView from './MapView.jsx'
 
 const HELP_STORAGE_KEY = 'gh:groundsHelpSeen'
 
@@ -11,6 +12,7 @@ export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
     try { return localStorage.getItem(HELP_STORAGE_KEY) !== '1' }
     catch { return true }
   })
+  const [showMap, setShowMap] = useState(false)
 
   // debounce the search box like the original (120ms)
   useEffect(() => {
@@ -32,6 +34,20 @@ export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
   return (
     <section className="view" role="tabpanel">
       {showHelp && <GroundsHelpModal onClose={() => setShowHelp(false)} />}
+      {showMap && (
+        <GroundsMapModal visited={visited}
+          onOpen={id => { setShowMap(false); onOpen(id) }}
+          onClose={() => setShowMap(false)} />
+      )}
+      <div className="mapview-banner">
+        <button className="btn mapview-open" onClick={() => setShowMap(true)}>
+          Map View
+        </button>
+        <button className="mapview-prompt" onClick={() => setShowMap(true)}>
+          Want to see a map view of the stadiums you've been to?
+          <span className="mapview-cta"> Click here</span>
+        </button>
+      </div>
       <div className="searchbar">
         <div className="search-field">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -80,6 +96,28 @@ export default function GroundsView ({ visited, readOnly, onToggle, onOpen }) {
         )}
       </ul>
     </section>
+  )
+}
+
+function GroundsMapModal ({ visited, onOpen, onClose }) {
+  useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', h)
+      document.body.style.overflow = ''
+    }
+  }, [onClose])
+  return (
+    <div className="map-scrim" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="map-dlg" role="dialog" aria-modal="true" aria-label="Map view of stadiums">
+        <button className="map-close" aria-label="Close map" onClick={onClose}>×</button>
+        <div className="map-body">
+          <MapView visited={visited} onOpen={onOpen} />
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -26,7 +26,6 @@ export function Turnstiles ({ view, onView, counts }) {
   const tabs = [
     ['fixtures', 'Fixtures', ''],
     ['grounds', 'Grounds', counts.grounds],
-    ['map', 'Map', counts.map],
     ['feed', 'Matchday', counts.feed],
     ['passport', 'My Profile', counts.passport],
     ['stats', 'Statistics', '']

@@ -472,12 +472,12 @@ dialog::backdrop{background:rgba(20,15,5,.55)}
   .ground-cap{display:none}
   .searchbar{top:102px}
   .region{grid-template-columns:110px 1fr 56px}
-  .masthead-inner{min-height:64px}
-  .wordmark{width:200px;height:64px}
-  .wordmark .arch{top:5px;height:52px}
-  .wm-text{font-size:19px;letter-spacing:.005em;padding-bottom:10px}
-  .tally{padding-bottom:12px;font-size:11.5px}
-  .tally b{font-size:14px}
+  .masthead-inner{min-height:60px;padding:0 10px;gap:8px}
+  .wordmark{width:170px;height:60px}
+  .wordmark .arch{top:5px;height:48px}
+  .wm-text{font-size:17px;letter-spacing:.005em;padding-bottom:9px}
+  .tally{padding-bottom:11px;font-size:11px;gap:3px}
+  .tally b{font-size:13px}
   .turnstiles{top:66px}
   .turnstile{padding:10px 11px 9px;font-size:11px;letter-spacing:.13em}
   .map-zooms .chip{font-size:11px;padding:3px 9px}
@@ -573,7 +573,8 @@ form#authForm{padding:0 24px}
 
 @media (max-width:620px){
   .passport-actions{width:100%;margin-left:0}
-  .signout{padding:6px 11px 7px;font-size:12px}
+  .signout{padding:5px 9px 6px;font-size:10.5px;letter-spacing:.02em;
+    border-width:1.2px}
 }
 
 
