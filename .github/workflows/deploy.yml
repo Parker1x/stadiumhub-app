@@ -22,18 +22,12 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Deploy dist/ to VPS via rsync over SSH
+        uses: burnett01/rsync-deployments@7.0.2
         with:
-          host: 51.195.148.206
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            echo "=== Deploy started ==="
-            echo "User: $(whoami)"
-            echo "Home: $HOME"
-            ls -la /var/www/groundhopper/
-            rsync -avz --delete dist/ /var/www/groundhopper/
-            echo "=== Deploy finished ==="
-            ls -la /var/www/groundhopper/
+          switches: -avz --delete
+          path: dist/
+          remote_path: /var/www/groundhopper/
+          remote_host: 51.195.148.206
+          remote_user: ubuntu
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
