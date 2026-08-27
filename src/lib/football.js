@@ -240,14 +240,103 @@ export async function getWindowMatches (comp, fromStr, toStr, { skipCache = fals
 // call. football-data.org's /v4/matches endpoint returns the lot (64-81
 // matches for a weekend), which replaces the old per-competition loop that
 // burned 9 requests and kept tripping the rate limit.
+//
+// We also merge in TheSportsDB for the English/Scottish competitions that
+// football-data.org's free tier doesn't cover (EFL Cup, FA Cup, League 1/2,
+// Scottish leagues).
 export async function getFixturesForRange (fromStr, toStr, { skipCache = false } = {}) {
   const key = `${fromStr}|${toStr}`
-  if (skipCache) mem.delete('fdall:' + key)
-  const matches = await cached('fdall', key, 5 * 60e3, async () => {
-    const j = await fdGet(`/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
-    return j.matches || []
-  })
-  return { matches, skipped: [] }
+  if (skipCache) { mem.delete('fdall:' + key); mem.delete('sdball:' + key) }
+
+  const [fdMatches, sdbMatches] = await Promise.all([
+    cached('fdall', key, 5 * 60e3, async () => {
+      const j = await fdGet(`/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
+      return j.matches || []
+    }).catch(() => []),
+    cached('sdball', key, 5 * 60e3, () => getSportsDbMatchesInRange(fromStr, toStr)).catch(() => [])
+  ])
+
+  return { matches: [...fdMatches, ...sdbMatches], skipped: [] }
+}
+
+// -------------------------------------------------------- TheSportsDB ------
+// Free JSON API — no key needed, direct browser calls (CORS is fine). Covers
+// the English/Scottish competitions football-data.org's free tier omits.
+// League IDs verified against /lookupleague.php.
+const SPORTSDB_LEAGUE_IDS = [
+  4570, // EFL Cup (Carabao Cup)
+  4482, // FA Cup
+  4396, // English League 1
+  4397, // English League 2
+  4330, // Scottish Premier League
+  4395, // Scottish Championship
+  4669  // Scottish League 1
+]
+
+async function getSportsDbMatchesInRange (fromStr, toStr) {
+  const days = daysBetween(fromStr, toStr)
+  const buckets = await Promise.all(days.flatMap(d =>
+    SPORTSDB_LEAGUE_IDS.map(id => sdbEventsForDay(d, id).catch(() => []))
+  ))
+  return buckets.flat().map(normaliseSdbEvent).filter(Boolean)
+}
+
+async function sdbEventsForDay (dateStr, leagueId) {
+  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${dateStr}&s=Soccer&l=${leagueId}`
+  const res = await fetch(url)
+  if (!res.ok) return []
+  const j = await res.json().catch(() => ({}))
+  return j.events || []
+}
+
+function daysBetween (fromStr, toStr) {
+  const out = []
+  const from = new Date(fromStr + 'T00:00:00Z')
+  const to = new Date(toStr + 'T00:00:00Z')
+  for (let d = from; d <= to; d = new Date(d.getTime() + 864e5)) {
+    out.push(d.toISOString().slice(0, 10))
+  }
+  return out
+}
+
+// Convert TheSportsDB event → football-data-shaped match so FixturesView can
+// render it with zero UI changes. IDs prefixed 'sdb:' to avoid colliding with
+// football-data's numeric IDs and so syncPlans can skip them.
+function normaliseSdbEvent (e) {
+  if (!e || !e.strHomeTeam || !e.strAwayTeam) return null
+  const iso = e.strTimestamp
+    ? (e.strTimestamp.endsWith('Z') ? e.strTimestamp : e.strTimestamp + 'Z')
+    : (e.dateEvent && e.strTime ? `${e.dateEvent}T${e.strTime.slice(0, 8)}Z` : null)
+  if (!iso) return null
+  return {
+    id: 'sdb:' + e.idEvent,
+    utcDate: iso,
+    status: mapSdbStatus(e.strStatus, iso),
+    competition: {
+      name: e.strLeague,
+      code: 'SDB' + e.idLeague,
+      emblem: e.strLeagueBadge || null
+    },
+    homeTeam: { id: e.idHomeTeam, name: e.strHomeTeam, shortName: e.strHomeTeam },
+    awayTeam: { id: e.idAwayTeam, name: e.strAwayTeam, shortName: e.strAwayTeam },
+    score: {
+      fullTime: {
+        home: e.intHomeScore == null ? null : Number(e.intHomeScore),
+        away: e.intAwayScore == null ? null : Number(e.intAwayScore)
+      }
+    }
+  }
+}
+
+function mapSdbStatus (raw, iso) {
+  const s = (raw || '').toLowerCase()
+  if (/(ft|match finished|full time|finished|aet|pen)/.test(s)) return 'FINISHED'
+  if (/(1h|2h|ht|half time|et|in play|live)/.test(s)) return 'IN_PLAY'
+  if (/postp|cancel|abandon/.test(s)) return 'POSTPONED'
+  // No status yet: infer from kickoff time
+  const t = Date.parse(iso)
+  if (Number.isFinite(t) && t < Date.now() - 3 * 3600e3) return 'FINISHED'
+  return 'TIMED'
 }
 
 // Convert "I'm attending" plans into real attendance once matches finish.
@@ -259,6 +348,8 @@ export async function syncPlans (me) {
 
   let done = 0
   for (const plan of plans) {
+    // TheSportsDB matches aren't in football-data.org; skip auto-sync.
+    if (String(plan.match_id).startsWith('sdb:')) continue
     try {
       const j = await fdGet(`/matches/${plan.match_id}`)
       const m = j.match
