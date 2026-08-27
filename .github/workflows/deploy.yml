@@ -28,7 +28,6 @@ jobs:
           host: 51.195.148.206
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          strict: false
           script: |
             set -e
             echo "=== Deploy started ==="
