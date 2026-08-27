@@ -250,7 +250,10 @@ export async function getWindowMatches (comp, fromStr, toStr, { skipCache = fals
 export async function getFixturesForRange (fromStr, toStr, { skipCache = false } = {}) {
   const key = `${fromStr}|${toStr}`
   const [fdMatches, sdbMatches] = await Promise.all([
-    cached('fdall', key, 5 * 60e3, async () => {
+    // Cache kind bumped from 'fdall' → 'fdall2' after switching away from the
+    // aggregate /matches endpoint: old rows returned an empty payload and
+    // would otherwise stick around for the 5-minute TTL.
+    cached('fdall2', key, 5 * 60e3, async () => {
       const results = await Promise.all(FIXTURE_COMPS.map(comp =>
         fdGet(`/competitions/${comp}/matches?dateFrom=${fromStr}&dateTo=${toStr}`)
           .then(j => j.matches || [])
