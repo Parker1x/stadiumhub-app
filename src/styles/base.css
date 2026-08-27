@@ -106,7 +106,8 @@ button,input,textarea,select{font:inherit;color:inherit}
 /* Table of contents — cream tab strip below the red band */
 .turnstiles{background:var(--paper);border-bottom:1px solid var(--line-strong);
   position:sticky;top:74px;z-index:39}
-.turnstiles-inner{max-width:940px;margin:0 auto;padding:0 18px;display:flex;gap:0}
+.turnstiles-inner{max-width:940px;margin:0 auto;padding:0 18px;
+  display:flex;gap:0;justify-content:center}
 .turnstile{
   appearance:none;background:none;border:0;cursor:pointer;
   font-family:"Chivo",sans-serif;font-size:11.5px;font-weight:700;
