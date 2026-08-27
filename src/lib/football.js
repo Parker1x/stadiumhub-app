@@ -40,14 +40,12 @@ async function cached (kind, key, ttlMs, fetcher) {
 }
 
 async function fdGet (path) {
-  // Dev: go through the Vite proxy (/fdapi -> api.football-data.org). The
-  // proxy injects the auth header server-side, sidestepping the API's broken
-  // CORS policy. Prod (built site): call directly with the key header.
-  const base = import.meta.env.DEV ? '/fdapi' : API
+  // Both dev and prod go through /fdapi -> api.football-data.org (Vite proxy
+  // in dev, nginx location on the VPS in prod). The proxy injects the auth
+  // header server-side, sidestepping the API's broken CORS policy and keeping
+  // the key out of the client bundle.
   await rateGate()
-  const res = await fetch(base + path, import.meta.env.DEV
-    ? {}
-    : { headers: { 'X-Auth-Token': FOOTBALL_KEY } })
+  const res = await fetch('/fdapi/v4' + path)
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     const e = new Error(`football-data ${res.status}: ${body.slice(0, 140)}`)
