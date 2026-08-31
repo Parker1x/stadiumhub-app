@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { sb, configProblem, GH_BUILD } from './lib/supabase.js'
 import { withTimeout, setToastFn } from './lib/util.js'
 import { loadProfile, loadVisits, loadPosts } from './lib/data.js'
+import { syncPlans } from './lib/football.js'
 
 import AuthGate from './components/AuthGate.jsx'
 import Masthead, { Turnstiles } from './components/Masthead.jsx'
@@ -63,6 +64,9 @@ export default function App () {
       setMe(profile)
       setVisited(vis)
       setPosts(ps)
+      // Fold any finished Attend plans into stats now, regardless of which
+      // tab the user lands on. Fires once per sign-in; idempotent.
+      syncPlans(profile).catch(() => {})
       const who = new URLSearchParams(location.search).get('u')
       if (who && who !== profile.username) await viewProfile(who, profile)
     } catch (err) {

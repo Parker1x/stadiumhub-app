@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { byId, fmt, initials, slug } from '../lib/util.js'
 import { sb } from '../lib/supabase.js'
-import { hasFootballKey, syncAttendance } from '../lib/football.js'
+import { hasFootballKey, syncAttendance, syncPlans } from '../lib/football.js'
 
 // The Statistics page: what your groundhopping has actually witnessed.
 // Everything here derives from attended_matches + goal_events, which are
@@ -55,6 +55,12 @@ export default function StatsView ({ me, visited }) {
       // was written (e.g. today's PL game not yet in a warm cache).
       const res = await syncAttendance(me, visited, { skipCache: true })
       found = res.found
+
+      // Also fold in any Attend-button plans that have finished since the
+      // Fixtures page was last opened — otherwise they'd sit unsynced until
+      // the user next visited that tab.
+      const plansRes = await syncPlans(me).catch(() => ({ synced: 0 }))
+      found += plansRes.synced || 0
 
       // Pull scorer details for any attended match that lacks them yet.
       const { data: missing } = await sb.from('attended_matches')
