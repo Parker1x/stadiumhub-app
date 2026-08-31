@@ -430,7 +430,8 @@ export async function syncPlans (me) {
     // TheSportsDB matches take a different sync path (different API, no
     // per-goal scorer data on the free tier — final score only).
     if (String(plan.match_id).startsWith('sdb:')) {
-      try { if (await syncSdbPlan(me, plan)) done++ } catch { /* try next time */ }
+      try { if (await syncSdbPlan(me, plan)) done++ }
+      catch (err) { console.warn('[stadiumhub] syncSdbPlan failed', plan.match_id, err?.message) }
       await new Promise(r => setTimeout(r, 350))
       continue
     }
@@ -441,9 +442,10 @@ export async function syncPlans (me) {
       const hg = m?.score?.fullTime?.home ?? null
       const ag = m?.score?.fullTime?.away ?? null
 
-      await sb.from('match_plans').update({
+      const upd = await sb.from('match_plans').update({
         home_goals: hg, away_goals: ag, status, synced: status === 'FINISHED'
       }).eq('id', plan.id)
+      if (upd.error) console.warn('[stadiumhub] plan update', plan.match_id, upd.error.message)
 
       if (status === 'FINISHED') {
         // attendance row (only if not already there via visit-date matching)
@@ -451,7 +453,7 @@ export async function syncPlans (me) {
           .select('id').eq('user_id', me.id).eq('match_id', plan.match_id).maybeSingle()
         let rowId = existing?.id
         if (!rowId) {
-          const { data: made } = await sb.from('attended_matches').insert({
+          const ins = await sb.from('attended_matches').insert({
             user_id: me.id,
             ground_id: null,
             match_id: plan.match_id,
@@ -469,10 +471,13 @@ export async function syncPlans (me) {
               own_goal: g.ownGoal === true
             }))
           }).select('id').single()
-          rowId = made?.id
+          if (ins.error) {
+            console.warn('[stadiumhub] attended_matches insert', plan.match_id, ins.error.message)
+          }
+          rowId = ins.data?.id
         }
         if (rowId && j.goals?.length) {
-          await sb.from('goal_events').upsert(
+          const up = await sb.from('goal_events').upsert(
             j.goals.map(g => ({
               user_id: me.id,
               match_row_id: rowId,
@@ -483,12 +488,21 @@ export async function syncPlans (me) {
               own_goal: g.ownGoal === true
             })),
             { onConflict: 'match_row_id,player,minute', ignoreDuplicates: true })
+          if (up.error) console.warn('[stadiumhub] goal_events upsert', plan.match_id, up.error.message)
         }
-        done++
+        if (rowId) done++
+        else console.warn('[stadiumhub] plan finished but no attended_matches row', plan.match_id, {
+          hg, ag, homeTeam: m.homeTeam?.name, awayTeam: m.awayTeam?.name
+        })
+      } else {
+        console.info('[stadiumhub] plan not yet finished', plan.match_id, 'status:', status)
       }
-    } catch { /* network/quota hiccup: leave unsynced, retried next time */ }
+    } catch (err) {
+      console.warn('[stadiumhub] syncPlan failed', plan.match_id, err?.message)
+    }
     await new Promise(r => setTimeout(r, 350))
   }
   if (done) window.dispatchEvent(new CustomEvent('gh:attendance-changed'))
+  console.info('[stadiumhub] syncPlans done: synced', done, 'of', plans.length)
   return { synced: done }
 }

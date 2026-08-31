@@ -13,9 +13,10 @@ export default function StatsView ({ me, visited }) {
   async function load () {
     setState({ loading: true })
     try {
-      const [att, goals] = await Promise.all([
+      const [att, goals, plans] = await Promise.all([
         sb.from('attended_matches').select('*').eq('user_id', me.id).order('match_date', { ascending: false }),
-        sb.from('goal_events').select('*').eq('user_id', me.id)
+        sb.from('goal_events').select('*').eq('user_id', me.id),
+        sb.from('match_plans').select('*').eq('user_id', me.id).order('match_date', { ascending: false })
       ])
       // PostgREST signals a missing table with code 42P01 / an HTTP 404-ish
       // relation error. Translate that into something actionable.
@@ -31,7 +32,10 @@ export default function StatsView ({ me, visited }) {
       }
       if (att.error) throw att.error
       if (goals.error) throw goals.error
-      setState({ loading: false, attended: att.data || [], goals: goals.data || [] })
+      setState({ loading: false,
+        attended: att.data || [],
+        goals: goals.data || [],
+        plans: plans?.data || [] })
     } catch (err) {
       setState({ loading: false, error: err.message })
     }
@@ -180,6 +184,36 @@ export default function StatsView ({ me, visited }) {
             fills these numbers in automatically.
           </p>
         </div>
+      )}
+
+      {(state.plans || []).length > 0 && (
+        <details className="card privacy" style={{ marginBottom: 14 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13 }}>
+            Attend-plans diagnostic ({state.plans.length})
+          </summary>
+          <table style={{ width: '100%', fontSize: 12, marginTop: 8, borderCollapse: 'collapse' }}>
+            <thead><tr>
+              <th style={{ textAlign: 'left', padding: 4 }}>Match</th>
+              <th style={{ textAlign: 'left', padding: 4 }}>Date</th>
+              <th style={{ textAlign: 'left', padding: 4 }}>Status</th>
+              <th style={{ textAlign: 'left', padding: 4 }}>Score</th>
+              <th style={{ textAlign: 'left', padding: 4 }}>Synced</th>
+              <th style={{ textAlign: 'left', padding: 4 }}>Match&nbsp;ID</th>
+            </tr></thead>
+            <tbody>
+              {state.plans.map(p => (
+                <tr key={p.id} style={{ borderTop: '1px solid var(--line)' }}>
+                  <td style={{ padding: 4 }}>{p.home_team} v {p.away_team}</td>
+                  <td style={{ padding: 4 }}>{p.match_date?.slice(0, 10)}</td>
+                  <td style={{ padding: 4 }}>{p.status || '—'}</td>
+                  <td style={{ padding: 4 }}>{p.home_goals ?? '—'}–{p.away_goals ?? '—'}</td>
+                  <td style={{ padding: 4 }}>{p.synced ? '✓' : '✗'}</td>
+                  <td style={{ padding: 4, fontFamily: 'monospace' }}>{p.match_id}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
       )}
 
       <div className="stats">
