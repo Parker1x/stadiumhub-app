@@ -73,8 +73,10 @@ export default function StatsView ({ me, visited }) {
         try {
           const j = await fetch(`/fdapi/v4/matches/${row.match_id}`)
           if (!j.ok) continue
-          const full = await j.json()
-          const goals = (full.goals || []).map(g => ({
+          const raw = await j.json()
+          // v4 returns the match at the root; older shape was { match: {...} }.
+          const full = raw.match || raw
+          const goals = (raw.goals || full.goals || []).map(g => ({
             player: g.scorer?.name || 'Unknown',
             team_side: g.team?.id === full.homeTeam?.id ? 'home' : 'away',
             minute: g.minute ?? null,

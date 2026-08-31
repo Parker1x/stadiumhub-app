@@ -437,7 +437,9 @@ export async function syncPlans (me) {
     }
     try {
       const j = await fdGet(`/matches/${plan.match_id}`)
-      const m = j.match
+      // football-data v4 returns the match at the response root, not wrapped
+      // as `{ match: {...} }`. Fall back to j itself if the wrapper is absent.
+      const m = j.match || j
       const status = m?.status
       const hg = m?.score?.fullTime?.home ?? null
       const ag = m?.score?.fullTime?.away ?? null
