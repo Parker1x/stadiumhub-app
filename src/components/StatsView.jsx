@@ -50,8 +50,10 @@ export default function StatsView ({ me, visited }) {
     setSyncing(true)
     try {
       let found = 0
-      // batch by competition inside syncAttendance; call once with all visits
-      const res = await syncAttendance(me, visited)
+      // Manual "re-check" always bypasses the fixture caches — otherwise a
+      // 6h-stale fixtures row can mask a match that finished after the row
+      // was written (e.g. today's PL game not yet in a warm cache).
+      const res = await syncAttendance(me, visited, { skipCache: true })
       found = res.found
 
       // Pull scorer details for any attended match that lacks them yet.

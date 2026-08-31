@@ -102,13 +102,13 @@ const matchTeam = (teamMap, club) =>
 // --------------------------------------------------------------- fixtures --
 // Fixtures + results for one competition, ±window around today. Cached 6h;
 // finished matches never change, live ones bypass the cache entirely.
-export async function getFixtures (comp) {
+export async function getFixtures (comp, { skipCache = false } = {}) {
   const from = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
   const to = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10)
   return cached('fd_matches', comp, 6 * 3600e3, async () => {
     const j = await fdGet(`/competitions/${comp}/matches?dateFrom=${from}&dateTo=${to}`)
     return j.matches || []
-  })
+  }, { skipCache })
 }
 
 // Live matches right now — NEVER cached; called by the poller only.
@@ -164,7 +164,7 @@ function matchOnDate (matches, teamId, ymd) {
   }) || null
 }
 
-export async function syncAttendance (me, visited) {
+export async function syncAttendance (me, visited, { skipCache = false } = {}) {
   if (!hasFootballKey()) return { synced: 0, found: 0 }
   const comps = [...new Set(Object.keys(visited).map(id => byId[id]).filter(Boolean).map(g => g.comp))]
   let synced = 0
@@ -179,10 +179,10 @@ export async function syncAttendance (me, visited) {
   for (const comp of comps) {
     if (!comp) continue
     const { fixtures } = await cached('gf', comp, 6 * 3600e3, async () => {
-      const fx = await getFixtures(comp)
+      const fx = await getFixtures(comp, { skipCache })
       const tm = await teamsForComp(comp)
       return { fixtures: fx, clubToTeam: {} }
-    })
+    }, { skipCache })
     const tm = await teamsForComp(comp)
     for (const gid of Object.keys(visited)) {
       const g = byId[gid]
