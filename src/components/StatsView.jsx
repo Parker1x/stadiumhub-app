@@ -177,8 +177,8 @@ export default function StatsView ({ me, visited }) {
       <div className="stats">
         <Big label="Matches attended" v={fmt(s.attended.length)} />
         <Big label="Goals witnessed" v={fmt(s.totalGoals)} accent />
-        <Big label={`${me.display_name?.split(' ')[0] || 'Your'} team's goals`} v={fmt(s.homeTeamGoals)} />
-        <Big label="Opposition goals" v={fmt(s.awayTeamGoals)} />
+        <Big label="Home team goals" v={fmt(s.homeTeamGoals)} />
+        <Big label="Away team goals" v={fmt(s.awayTeamGoals)} />
         <Big label="Players seen score" v={fmt(s.topScorers.length)} />
         <Big label="Goals per game" v={s.attended.length ? (s.totalGoals / s.attended.length).toFixed(1) : '—'} />
       </div>
